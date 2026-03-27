@@ -3,6 +3,8 @@ package state
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"os"
 	"resource-manager/internal/contracts"
 )
@@ -21,11 +23,8 @@ func (as *ApplicationState) InitializeAppState(api, resource string) error {
 		return err
 	}
 
-	dec := json.NewDecoder(bytes.NewReader(a))
-	dec.DisallowUnknownFields()
-
 	var apiContract contracts.OpenApiDoc
-	if err := dec.Decode(&apiContract); err != nil {
+	if err := decodeStrictJSON(a, &apiContract); err != nil {
 		return err
 	}
 
@@ -34,16 +33,28 @@ func (as *ApplicationState) InitializeAppState(api, resource string) error {
 		return err
 	}
 
-	dec = json.NewDecoder(bytes.NewReader(r))
-	dec.DisallowUnknownFields()
-
 	var resourceContract contracts.ResourceDoc
-	if err := dec.Decode(&resourceContract); err != nil {
+	if err := decodeStrictJSON(r, &resourceContract); err != nil {
 		return err
 	}
 
 	as.ApiContract = apiContract
 	as.ResourceContract = resourceContract
+
+	return nil
+}
+
+func decodeStrictJSON(data []byte, v any) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+
+	if err := dec.Decode(v); err != nil {
+		return err
+	}
+
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		return fmt.Errorf("unexpected trailing data after JSON object")
+	}
 
 	return nil
 }
