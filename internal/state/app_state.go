@@ -46,7 +46,6 @@ func (as *ApplicationState) InitializeAppState(api, resource string) error {
 
 func decodeStrictJSON(data []byte, v any) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
 
 	if err := dec.Decode(v); err != nil {
 		return err
