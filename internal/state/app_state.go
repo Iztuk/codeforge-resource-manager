@@ -24,7 +24,8 @@ func (as *ApplicationState) InitializeAppState(api, resource string) error {
 	dec := json.NewDecoder(bytes.NewReader(a))
 	dec.DisallowUnknownFields()
 
-	if err := dec.Decode(&as.ApiContract); err != nil {
+	var apiContract contracts.OpenApiDoc
+	if err := dec.Decode(&apiContract); err != nil {
 		return err
 	}
 
@@ -36,9 +37,13 @@ func (as *ApplicationState) InitializeAppState(api, resource string) error {
 	dec = json.NewDecoder(bytes.NewReader(r))
 	dec.DisallowUnknownFields()
 
-	if err := dec.Decode(&as.ResourceContract); err != nil {
+	var resourceContract contracts.ResourceDoc
+	if err := dec.Decode(&resourceContract); err != nil {
 		return err
 	}
+
+	as.ApiContract = apiContract
+	as.ResourceContract = resourceContract
 
 	return nil
 }
