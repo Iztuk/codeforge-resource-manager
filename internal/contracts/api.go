@@ -1,5 +1,7 @@
 package contracts
 
+import "encoding/json"
+
 type OpenApiDoc struct {
 	OpenAPI    string                     `json:"openapi"`
 	Info       OpenApiInfo                `json:"info"`
@@ -71,11 +73,11 @@ type OpenApiSchemaRef struct {
 	Required   []string                    `json:"required,omitempty"`
 	Items      *OpenApiSchemaRef           `json:"items,omitempty"`
 
-	Enum      []string `json:"enum,omitempty"`
-	Format    string   `json:"format,omitempty"`
-	Nullable  bool     `json:"nullable,omitempty"`
-	MinLength *int     `json:"minLength,omitempty"`
-	MaxLength *int     `json:"maxLength,omitempty"`
+	Enum      []json.RawMessage `json:"enum,omitempty"`
+	Format    string            `json:"format,omitempty"`
+	Nullable  bool              `json:"nullable,omitempty"`
+	MinLength *int              `json:"minLength,omitempty"`
+	MaxLength *int              `json:"maxLength,omitempty"`
 }
 
 type RouteResourceBinding struct {
