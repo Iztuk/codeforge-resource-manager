@@ -15,8 +15,20 @@ const (
 	ScreenContent
 )
 
+type Page int
+
+const (
+	HomePage Page = iota
+	ResourcesPage
+	BindResourcePage
+)
+
 type model struct {
-	active Screen
+	activeScreen Screen
+	menuItem     MenuItem
+
+	currentPage Page
+
 	width  int
 	height int
 }
@@ -24,13 +36,11 @@ type model struct {
 var (
 	boxStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#0087ff")).
 			Foreground(lipgloss.Color("#808080")).
 			Padding(1, 1)
 
 	focusedBoxStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#0087ff")).
 			Padding(1, 1).
 			Bold(true)
 )
@@ -51,15 +61,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "ctrl+h":
-			if m.active > ScreenMenubar {
-				m.active--
+			if m.activeScreen > ScreenMenubar {
+				m.activeScreen--
 			}
 			return m, nil
 		case "ctrl+l":
-			if m.active < ScreenContent {
-				m.active++
+			if m.activeScreen < ScreenContent {
+				m.activeScreen++
 			}
 			return m, nil
+		}
+
+		if m.activeScreen == 0 {
+			switch msg.String() {
+			case "j":
+				if int(m.menuItem) < len(m.CurrentMenuItems())-1 {
+					m.menuItem++
+				}
+				return m, nil
+			case "k":
+				if m.menuItem > 0 {
+					m.menuItem--
+				}
+				return m, nil
+			case "enter":
+				m.SelectMenuItem()
+				return m, nil
+			case "backspace":
+				m.currentPage = HomePage
+				return m, nil
+			}
 		}
 	}
 
@@ -91,23 +122,16 @@ func (m model) View() tea.View {
 
 func (m model) menuBarView(width, height int) string {
 	style := boxStyle
-	if m.active == ScreenMenubar {
+	if m.activeScreen == ScreenMenubar {
 		style = focusedBoxStyle
 	}
 
-	var b strings.Builder
-	b.WriteString("Menu\n\n")
-	b.WriteString("Resources\n")
-	b.WriteString("API Paths\n")
-	b.WriteString("Quit\n\n")
-	b.WriteString("ctrl+h / ctrl+l to switch focus")
-
-	return style.Width(width).Height(height).Render(b.String())
+	return style.Width(width).Height(height).Render(m.GenerateMenuItems(m.CurrentMenuItems(), width))
 }
 
 func (m model) contentView(width, height int) string {
 	style := boxStyle
-	if m.active == ScreenContent {
+	if m.activeScreen == ScreenContent {
 		style = focusedBoxStyle
 	}
 
