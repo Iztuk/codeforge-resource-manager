@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"resource-manager/internal/state"
+	"resource-manager/views"
 )
 
 func main() {
@@ -27,4 +28,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	views.StartView()
 }
