@@ -8,7 +8,7 @@ Load contracts into memory and initialize app state
 **Includes**
 
 - Accept resource file path
-- Accpet API contract file path
+- Accept API contract file path
 - Parse JSON into internal models
 - Initialize AppState
 - Handle errors (invalid path, invalid JSON)
