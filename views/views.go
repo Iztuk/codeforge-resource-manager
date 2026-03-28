@@ -25,10 +25,14 @@ const (
 
 type model struct {
 	activeScreen Screen
-	menuItem     MenuItem
+	menuIndex    int
 
 	currentPage Page
 	pageHistory Stack[Page]
+
+	resourceLevel    ResourceViewLevel
+	selectedResource string
+	selectedTable    string
 
 	width  int
 	height int
@@ -77,17 +81,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.activeScreen == 0 {
 			switch msg.String() {
 			case "j":
-				if int(m.menuItem) < len(m.CurrentMenuItems())-1 {
-					m.menuItem++
+				if m.menuIndex < len(m.CurrentMenuItems())-1 {
+					m.menuIndex++
 				}
 				return m, nil
 			case "k":
-				if m.menuItem > 0 {
-					m.menuItem--
+				if m.menuIndex > 0 {
+					m.menuIndex--
 				}
 				return m, nil
 			case "enter":
 				m.SelectMenuItem()
+				m.menuIndex = 0
 				return m, nil
 			case "backspace":
 				page, t := m.pageHistory.Pop()
@@ -96,6 +101,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 				m.currentPage = page
+				m.menuIndex = 0
 				return m, nil
 			}
 		}

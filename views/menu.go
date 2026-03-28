@@ -2,18 +2,17 @@ package views
 
 import (
 	"resource-manager/internal/state"
+	"sort"
 	"strings"
 
 	"charm.land/lipgloss/v2"
 )
 
-type MenuItem int
+type ResourceViewLevel int
 
 const (
-	HomeResources MenuItem = iota
-	HomeBindResource
-
-	numMenuItem
+	ResourceLevelList ResourceViewLevel = iota
+	ResourceLevelTables
 )
 
 func (m model) GenerateMenuItems(menuItems []string, width int) string {
@@ -28,13 +27,13 @@ func (m model) GenerateMenuItems(menuItems []string, width int) string {
 
 	var b strings.Builder
 	for i, item := range menuItems {
-		if i == int(m.menuItem) {
+		if i == m.menuIndex {
 			b.WriteString(selectedStyle.Render(item))
 		} else {
 			b.WriteString(style.Render(item))
 		}
 
-		if i < len(menuItems)-1 {
+		if i < m.menuIndex-1 {
 			b.WriteString("\n")
 		}
 	}
@@ -50,11 +49,27 @@ func (m model) CurrentMenuItems() []string {
 			"Bind Resource",
 		}
 	case ResourcesPage:
-		var resources []string
-		for _, res := range state.AppState.ResourceContract.Resources {
-			resources = append(resources, res.Name)
+		switch m.resourceLevel {
+		case ResourceLevelList:
+			var resources []string
+			for _, item := range state.AppState.ResourceContract.Resources {
+				resources = append(resources, item.Name)
+			}
+
+			sort.Strings(resources)
+			return resources
+		case ResourceLevelTables:
+			var tables []string
+
+			if state.AppState.ResourceContract.Resources[m.selectedResource].DB != nil {
+				for key := range state.AppState.ResourceContract.Resources[m.selectedResource].DB.Tables {
+					tables = append(tables, key)
+				}
+			}
+
+			sort.Strings(tables)
+			return tables
 		}
-		return resources
 	case BindResourcePage:
 	default:
 		return []string{
@@ -68,19 +83,30 @@ func (m model) CurrentMenuItems() []string {
 func (m *model) SelectMenuItem() {
 	switch m.currentPage {
 	case HomePage:
-		switch m.menuItem {
+		switch m.menuIndex {
 		case 0:
 			m.pageHistory.Push(m.currentPage)
 			m.currentPage = ResourcesPage
-			m.menuItem = 0
 			return
 		case 1:
 			m.pageHistory.Push(m.currentPage)
 			m.currentPage = BindResourcePage
-			m.menuItem = 0
 			return
 		}
 	case ResourcesPage:
+		switch m.resourceLevel {
+		case ResourceLevelList:
+			resources := m.CurrentMenuItems()
+
+			m.selectedResource = resources[m.menuIndex]
+			m.resourceLevel = ResourceLevelTables
+			return
+		case ResourceLevelTables:
+			tables := m.CurrentMenuItems()
+
+			m.selectedTable = tables[m.menuIndex]
+			return
+		}
 	case BindResourcePage:
 	}
 }
