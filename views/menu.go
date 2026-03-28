@@ -70,10 +70,12 @@ func (m *model) SelectMenuItem() {
 	case HomePage:
 		switch m.menuItem {
 		case 0:
+			m.pageHistory.Push(m.currentPage)
 			m.currentPage = ResourcesPage
 			m.menuItem = 0
 			return
 		case 1:
+			m.pageHistory.Push(m.currentPage)
 			m.currentPage = BindResourcePage
 			m.menuItem = 0
 			return
@@ -81,4 +83,24 @@ func (m *model) SelectMenuItem() {
 	case ResourcesPage:
 	case BindResourcePage:
 	}
+}
+
+type Stack[T any] struct {
+	items []T
+}
+
+func (s *Stack[T]) Push(item T) {
+	s.items = append(s.items, item)
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+	if len(s.items) == 0 {
+		var zero T
+		return zero, false
+	}
+
+	index := len(s.items) - 1
+	item := s.items[index]
+	s.items = s.items[:index]
+	return item, true
 }

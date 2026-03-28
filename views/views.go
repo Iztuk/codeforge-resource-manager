@@ -28,6 +28,7 @@ type model struct {
 	menuItem     MenuItem
 
 	currentPage Page
+	pageHistory Stack[Page]
 
 	width  int
 	height int
@@ -46,6 +47,7 @@ var (
 )
 
 func (m model) Init() tea.Cmd {
+	m.pageHistory.Push(HomePage)
 	return nil
 }
 
@@ -88,7 +90,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.SelectMenuItem()
 				return m, nil
 			case "backspace":
-				m.currentPage = HomePage
+				page, t := m.pageHistory.Pop()
+				if !t {
+					m.currentPage = HomePage
+					return m, nil
+				}
+				m.currentPage = page
 				return m, nil
 			}
 		}
