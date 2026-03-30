@@ -22,6 +22,15 @@ Browse and select resources
 
 - Display list of resources
 - Navigation
-- Create new resource
-- Delete resource
 - Open resource detail view
+
+## Resource Add/Delete
+
+**Goal**
+Add and delete resources
+
+**Includes**
+
+- Add a resource
+- Delete a resource
+- Write to the resource contract file
