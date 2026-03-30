@@ -104,8 +104,8 @@ func (m *model) GenerateTableContentGrid(resourceName, tableName string) string 
 
 func (m *model) renderTableGrid(items []contracts.FieldSpec) string {
 	var cols int = 7 // Number of columns to display FieldSpec
-	var colWidth int = m.contentWidth / cols
-	var maxContentLength int = colWidth - 3 // Make space for border (2 chars)
+	var colWidth int = max(8, m.contentWidth/cols)
+	var maxContentLength int = max(4, colWidth-3) // Make space for border (2 chars)
 	var rows []string
 
 	var stringItems []string = []string{
@@ -143,7 +143,7 @@ func renderCell(content string, selected bool, width, maxContentLength int) stri
 	style := lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		Height(3).
-		Width(width-1).
+		Width(max(1, width-1)).
 		Align(lipgloss.Center, lipgloss.Center)
 
 	if selected {
@@ -152,7 +152,7 @@ func renderCell(content string, selected bool, width, maxContentLength int) stri
 	if content == "" {
 		content = "nil"
 	}
-	if len(content) > maxContentLength {
+	if maxContentLength > 3 && len(content) > maxContentLength {
 		return style.Render(content[:maxContentLength-3] + "...")
 	}
 
