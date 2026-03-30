@@ -97,12 +97,18 @@ func (m *model) SelectMenuItem() {
 		switch m.resourceLevel {
 		case ResourceLevelList:
 			resources := m.CurrentMenuItems()
+			if m.menuIndex < 0 || m.menuIndex >= len(resources) {
+				return
+			}
 
 			m.selectedResource = resources[m.menuIndex]
 			m.resourceLevel = ResourceLevelTables
 			return
 		case ResourceLevelTables:
 			tables := m.CurrentMenuItems()
+			if m.menuIndex < 0 || m.menuIndex >= len(tables) {
+				return
+			}
 
 			m.selectedResourceTable = tables[m.menuIndex]
 			return
