@@ -36,6 +36,7 @@ type FieldSpec struct {
 	Nullable   bool    `json:"nullable"`
 	Default    *string `json:"default,omitzero"`
 
-	Read  bool `json:"read"`
-	Write bool `json:"write"`
+	Read    bool `json:"read"`
+	Write   bool `json:"write"`
+	Mutable bool `json:"mutable"`
 }

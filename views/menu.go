@@ -33,7 +33,7 @@ func (m model) GenerateMenuItems(menuItems []string, width int) string {
 			b.WriteString(style.Render(item))
 		}
 
-		if i < m.menuIndex-1 {
+		if i < len(menuItems)-1 {
 			b.WriteString("\n")
 		}
 	}
@@ -104,11 +104,22 @@ func (m *model) SelectMenuItem() {
 		case ResourceLevelTables:
 			tables := m.CurrentMenuItems()
 
-			m.selectedTable = tables[m.menuIndex]
+			m.selectedResourceTable = tables[m.menuIndex]
 			return
 		}
 	case BindResourcePage:
 	}
+}
+
+func (m model) CurrentMenuSelection() string {
+	items := m.CurrentMenuItems()
+	if len(items) == 0 {
+		return ""
+	}
+	if m.menuIndex < 0 || m.menuIndex >= len(items) {
+		return ""
+	}
+	return items[m.menuIndex]
 }
 
 type Stack[T any] struct {
