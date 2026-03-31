@@ -2,6 +2,7 @@ package views
 
 import (
 	"log"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -167,12 +168,13 @@ func (m *model) View() tea.View {
 	m.contentWidth = max(20, m.width-m.menuWidth)
 
 	title := m.titleView(m.width, 0)
-	menu := m.menuBarView(m.menuWidth, m.height-5)
-	content := m.contentView(m.contentWidth, m.height-5)
+	menu := m.menuBarView(m.menuWidth, m.height-6)
+	content := m.contentView(m.contentWidth, m.height-6)
+	cmdHelp := m.cmdView(m.width, 0)
 
 	body := lipgloss.JoinHorizontal(lipgloss.Top, menu, content)
 
-	ui := lipgloss.JoinVertical(lipgloss.Top, title, body)
+	ui := lipgloss.JoinVertical(lipgloss.Top, title, body, cmdHelp)
 
 	v := tea.NewView(ui)
 	v.AltScreen = true
@@ -199,13 +201,55 @@ func (m *model) contentView(width, height int) string {
 
 func (m *model) titleView(width, height int) string {
 	style := boxStyle.
+		Padding(0).
 		Width(width).
 		Height(height).
 		Align(lipgloss.Center, lipgloss.Center).
 		Foreground(lipgloss.Color("#ffffff")).
 		Bold(true)
 
+	switch m.currentPage {
+	case HomePage:
+		return style.Render("CodeForge Resource Manager")
+	case ResourcesPage:
+		switch m.resourceLevel {
+		case ResourceLevelList:
+			return style.Render("Resources")
+		case ResourceLevelTables:
+			return style.Render(m.selectedResource)
+		}
+	case BindResourcePage:
+		return style.Render("Bind Resource")
+	}
+
 	return style.Render("CodeForge Resource Manager")
+}
+
+func (m *model) cmdView(width, height int) string {
+	style := lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		Padding(0).
+		Width(width).
+		Height(height).
+		Foreground(lipgloss.Color("#ffffff"))
+
+	var b strings.Builder
+
+	switch m.currentPage {
+	case HomePage:
+	case ResourcesPage:
+		switch m.resourceLevel {
+		case ResourceLevelList:
+			b.WriteString(" ")
+			b.WriteString("Add Resource: ctrl + a")
+			b.WriteString(" | ")
+			b.WriteString("Delete Resource: ctrl + d")
+		case ResourceLevelTables:
+		}
+	case BindResourcePage:
+	}
+
+	return style.Render(b.String())
 }
 
 func StartView() {
