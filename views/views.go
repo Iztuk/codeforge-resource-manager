@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -35,6 +36,13 @@ type model struct {
 	selectedResourceTable           string
 	selectedResourceTableCell       int
 	selectedResourceTableCellLength int
+
+	contentMode  ContentMode
+	focusedInput int
+
+	// Add Resource Form
+	nameInput textinput.Model
+	addrInput textinput.Model
 
 	width        int
 	height       int
@@ -81,6 +89,18 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		if m.currentPage == ResourcesPage && m.resourceLevel == ResourceLevelList {
+			switch msg.String() {
+			case "ctrl+a":
+				m.activeScreen = ScreenContent
+				m.contentMode = ContentAddResource
+				m.initAddResourceForm()
+				return m, textinput.Blink
+
+			case "ctrl+d":
+			}
+		}
+
 		if m.activeScreen == ScreenMenubar {
 			switch msg.String() {
 			case "j":
@@ -116,6 +136,30 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.menuIndex = 0
 				return m, nil
 			}
+		}
+
+		if m.activeScreen == ScreenContent && m.contentMode == ContentAddResource {
+			switch msg.String() {
+			case "esc":
+				m.contentMode = ContentPreview
+				m.activeScreen = ScreenMenubar
+				return m, nil
+			case "tab", "down":
+				m.moveFormFocus(1)
+				return m, nil
+			case "shift+tab", "up":
+				m.moveFormFocus(-1)
+				return m, nil
+			case "enter":
+				// later: save resource
+				return m, nil
+			}
+
+			var cmd1, cmd2 tea.Cmd
+			m.nameInput, cmd1 = m.nameInput.Update(msg)
+			m.addrInput, cmd2 = m.addrInput.Update(msg)
+
+			return m, tea.Batch(cmd1, cmd2)
 		}
 
 		const cols = 7
@@ -240,10 +284,21 @@ func (m *model) cmdView(width, height int) string {
 	case ResourcesPage:
 		switch m.resourceLevel {
 		case ResourceLevelList:
-			b.WriteString(" ")
-			b.WriteString("Add Resource: ctrl + a")
-			b.WriteString(" | ")
-			b.WriteString("Delete Resource: ctrl + d")
+			if m.contentMode == ContentAddResource {
+				b.WriteString(" ")
+				b.WriteString("Navigation: tab (down)/shift+tab (up)")
+				b.WriteString(" | ")
+				b.WriteString("Cancel: esc")
+				b.WriteString(" | ")
+				b.WriteString("Save: enter")
+
+			} else {
+				b.WriteString(" ")
+				b.WriteString("Add Resource: ctrl + a")
+				b.WriteString(" | ")
+				b.WriteString("Delete Resource: ctrl + d")
+
+			}
 		case ResourceLevelTables:
 		}
 	case BindResourcePage:
