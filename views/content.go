@@ -224,5 +224,12 @@ func (m *model) renderAddResourceForm() string {
 	b.WriteString(m.addrInput.View())
 	b.WriteString("\n\n")
 
+	for i, err := range m.addResourceFormErrors {
+		b.WriteString(err.Error())
+		if i < len(m.addResourceFormErrors)-1 {
+			b.WriteString("\n")
+		}
+	}
+
 	return b.String()
 }

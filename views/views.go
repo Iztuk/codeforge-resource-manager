@@ -2,6 +2,7 @@ package views
 
 import (
 	"log"
+	"resource-manager/internal/resources"
 	"strings"
 
 	"charm.land/bubbles/v2/textinput"
@@ -41,8 +42,9 @@ type model struct {
 	focusedInput int
 
 	// Add Resource Form
-	nameInput textinput.Model
-	addrInput textinput.Model
+	nameInput             textinput.Model
+	addrInput             textinput.Model
+	addResourceFormErrors []error
 
 	width        int
 	height       int
@@ -151,7 +153,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.moveFormFocus(-1)
 				return m, nil
 			case "enter":
-				// later: save resource
+				m.addResourceFormErrors = make([]error, 0)
+				m.addResourceFormErrors = append(m.addResourceFormErrors, resources.AddDb(m.nameInput.Value(), m.addrInput.Value())...)
 				return m, nil
 			}
 
