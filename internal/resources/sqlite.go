@@ -173,7 +173,7 @@ func GetSQLiteTables(path string) ([]SQLiteTable, error) {
 	}
 
 	if len(sqliteTables) == 0 {
-		return nil, nil
+		return []SQLiteTable{}, nil
 	} else {
 		return sqliteTables, nil
 	}
