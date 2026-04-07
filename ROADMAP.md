@@ -34,3 +34,14 @@ Add and delete resources
 - Add a resource
 - Delete a resource
 - Write to the resource contract file
+
+## Resource Field Permission Editing
+
+**Goal**
+Allow users to modify field-level access rules for a resource table.
+
+**Includes**
+
+- Select editable permission cells ('read', 'write', 'mutable')
+- Toggle permission values between 'true' and 'false'
+- Persist field permission changes back to the resource contract file
