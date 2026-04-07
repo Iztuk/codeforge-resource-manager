@@ -39,15 +39,17 @@ type sqliteIndexInfoRow struct {
 }
 
 func CheckSQLiteConnection(path string) error {
-	db, err := sql.Open("sqlite3", path)
+	dsn := fmt.Sprintf("file:%s?mode=rw", path)
+
+	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
-		return fmt.Errorf("An error occured: %s", err.Error())
+		return err
 	}
 	defer db.Close()
 
 	// Connection validation
 	if err := db.Ping(); err != nil {
-		return fmt.Errorf("An error occurred: %s", err.Error())
+		return err
 	}
 
 	return nil

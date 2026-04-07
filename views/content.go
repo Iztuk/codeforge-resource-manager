@@ -224,8 +224,14 @@ func (m *model) renderAddResourceForm() string {
 	b.WriteString(m.addrInput.View())
 	b.WriteString("\n\n")
 
+	errStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FF0000"))
 	for i, err := range m.addResourceFormErrors {
-		b.WriteString(err.Error())
+		if err == nil {
+			continue
+		}
+		b.WriteString("\u2022 ")
+		b.WriteString(errStyle.Render(err.Error()))
 		if i < len(m.addResourceFormErrors)-1 {
 			b.WriteString("\n")
 		}
