@@ -3,9 +3,11 @@ package views
 import (
 	"log"
 	"resource-manager/internal/resources"
+	"resource-manager/internal/state"
 	"strings"
 
 	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -46,22 +48,26 @@ type model struct {
 	addrInput             textinput.Model
 	addResourceFormErrors []error
 
-	width        int
-	height       int
-	menuWidth    int
-	contentWidth int
+	// Delete Resource
+	deleteResourceErrors error
+
+	width           int
+	height          int
+	menuWidth       int
+	contentWidth    int
+	menuViewport    viewport.Model
+	contentViewport viewport.Model
 }
 
 var (
 	boxStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.RoundedBorder()).
-			Foreground(lipgloss.Color("#808080")).
 			Padding(1, 1)
 
 	focusedBoxStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.RoundedBorder()).
-			Padding(1, 1).
-			Bold(true)
+			BorderForeground(lipgloss.Color("#0087ff")).
+			Padding(1, 1)
 )
 
 func (m *model) Init() tea.Cmd {
@@ -73,6 +79,27 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
+		m.menuWidth = 24
+		m.contentWidth = max(20, m.width-m.menuWidth)
+
+		contentHeight := m.height - 6
+		if contentHeight < 1 {
+			contentHeight = 1
+		}
+
+		m.menuViewport = viewport.New(
+			viewport.WithWidth(max(1, m.menuWidth-4)),
+			viewport.WithHeight(max(1, contentHeight-4)),
+		)
+		m.menuViewport.SetContent(m.GenerateMenuItems(m.CurrentMenuItems(), m.menuWidth))
+
+		m.contentViewport = viewport.New(
+			viewport.WithWidth(max(1, m.contentWidth-4)),
+			viewport.WithHeight(max(1, contentHeight-4)),
+		)
+		m.contentViewport.SetContent(m.GenerateContent())
+
 		return m, nil
 
 	case tea.KeyPressMsg:
@@ -100,6 +127,15 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, textinput.Blink
 
 			case "ctrl+d":
+				items := m.CurrentMenuItems()
+				var menuItemName string
+				for i, item := range items {
+					if i == m.menuIndex {
+						menuItemName = item
+						break
+					}
+				}
+				m.deleteResourceErrors = state.DeleteResource(menuItemName)
 			}
 		}
 
@@ -118,8 +154,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			case "enter":
-				m.SelectMenuItem()
-				m.menuIndex = 0
+				if m.resourceLevel != ResourceLevelTables {
+					m.SelectMenuItem()
+					m.menuIndex = 0
+				}
 				return m, nil
 			case "backspace":
 				page, t := m.pageHistory.Pop()
@@ -136,6 +174,23 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.currentPage = page
 				m.menuIndex = 0
+				return m, nil
+			case "ctrl+n":
+				m.menuViewport.ScrollDown(1)
+				return m, nil
+			case "ctrl+p":
+				m.menuViewport.ScrollUp(1)
+				return m, nil
+			}
+		}
+
+		if m.activeScreen == ScreenContent {
+			switch msg.String() {
+			case "ctrl+n":
+				m.contentViewport.ScrollDown(1)
+				return m, nil
+			case "ctrl+p":
+				m.contentViewport.ScrollUp(1)
 				return m, nil
 			}
 		}
@@ -175,19 +230,21 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		const cols = 7
 		const minSelectableCell = cols
+		const selectableStart = cols - 3
+		const selectableEnd = cols - 1
 		if m.activeScreen == ScreenContent && m.resourceLevel == ResourceLevelTables {
 			switch msg.String() {
 
 			case "h":
 				col := m.selectedResourceTableCell % cols
-				if m.selectedResourceTableCell > minSelectableCell && col > 0 {
+				if m.selectedResourceTableCell > minSelectableCell && col > selectableStart {
 					m.selectedResourceTableCell--
 				}
 				return m, nil
 
 			case "l":
 				col := m.selectedResourceTableCell % cols
-				if col < cols-1 && m.selectedResourceTableCell+1 < m.selectedResourceTableCellLength {
+				if col < selectableEnd && m.selectedResourceTableCell+1 < m.selectedResourceTableCellLength {
 					m.selectedResourceTableCell++
 				}
 				return m, nil
@@ -219,9 +276,6 @@ func (m *model) View() tea.View {
 		return v
 	}
 
-	m.menuWidth = 24
-	m.contentWidth = max(20, m.width-m.menuWidth)
-
 	title := m.titleView(m.width, 0)
 	menu := m.menuBarView(m.menuWidth, m.height-6)
 	content := m.contentView(m.contentWidth, m.height-6)
@@ -242,7 +296,8 @@ func (m *model) menuBarView(width, height int) string {
 		style = focusedBoxStyle
 	}
 
-	return style.Width(width).Height(height).Render(m.GenerateMenuItems(m.CurrentMenuItems(), width))
+	m.menuViewport.SetContent(m.GenerateMenuItems(m.CurrentMenuItems(), width))
+	return style.Width(width).Height(height).Render(m.menuViewport.View())
 }
 
 func (m *model) contentView(width, height int) string {
@@ -251,7 +306,8 @@ func (m *model) contentView(width, height int) string {
 		style = focusedBoxStyle
 	}
 
-	return style.Width(width).Height(height).Render(m.GenerateContent())
+	m.contentViewport.SetContent(m.GenerateContent())
+	return style.Width(width).Height(height).Render(m.contentViewport.View())
 }
 
 func (m *model) titleView(width, height int) string {
@@ -322,7 +378,7 @@ func StartView() {
 	newStack := Stack[Page]{}
 	newStack.Push(HomePage)
 	m := &model{
-		selectedResourceTableCell: 7,
+		selectedResourceTableCell: 11,
 		pageHistory:               newStack,
 	}
 	p := tea.NewProgram(m)

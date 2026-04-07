@@ -19,7 +19,7 @@ const (
 )
 
 func (m *model) ResetContentSettings() {
-	m.selectedResourceTableCell = 7
+	m.selectedResourceTableCell = 11
 }
 
 func (m *model) GenerateContent() string {
@@ -34,6 +34,13 @@ func (m *model) GenerateContent() string {
 			if m.contentMode == ContentAddResource {
 				return m.renderAddResourceForm()
 			}
+
+			if m.contentMode == ContentPreview && m.deleteResourceErrors != nil {
+				errStyle := lipgloss.NewStyle().
+					Foreground(lipgloss.Color("#FF0000"))
+				return errStyle.Render(m.deleteResourceErrors.Error())
+			}
+
 		case ResourceLevelTables:
 			tableName := m.CurrentMenuSelection()
 			if tableName == "" {

@@ -36,6 +36,7 @@ func NormalizeSQLiteTables(sqliteTables []SQLiteTable) map[string]contracts.DBTa
 				Default:    def,
 				Read:       true,
 				Write:      true,
+				Mutable:    true,
 			}
 
 			if c.PrimaryKey {

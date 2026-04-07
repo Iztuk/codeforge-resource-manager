@@ -79,3 +79,13 @@ func WriteToResourceFile() error {
 
 	return nil
 }
+
+func DeleteResource(name string) error {
+	err := WriteToResourceFile()
+	if err == nil {
+		delete(AppState.ResourceContract.Resources, name)
+		return nil
+	}
+
+	return err
+}
