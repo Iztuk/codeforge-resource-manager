@@ -149,7 +149,7 @@ func (m *model) renderTableGrid(items []contracts.FieldSpec) string {
 		end := min(i+cols, len(stringItems))
 		var cells []string
 		for j := i; j < end; j++ {
-			cells = append(cells, renderCell(stringItems[j], j == m.selectedResourceTableCell, colWidth, maxContentLength))
+			cells = append(cells, renderCell(stringItems[j], j == m.selectedResourceTableCell, colWidth, maxContentLength, j))
 		}
 
 		rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Top, cells...))
@@ -158,7 +158,7 @@ func (m *model) renderTableGrid(items []contracts.FieldSpec) string {
 	return lipgloss.JoinVertical(lipgloss.Left, rows...)
 }
 
-func renderCell(content string, selected bool, width, maxContentLength int) string {
+func renderCell(content string, selected bool, width, maxContentLength, cellIndex int) string {
 	style := lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		Height(3).
@@ -168,9 +168,21 @@ func renderCell(content string, selected bool, width, maxContentLength int) stri
 	if selected {
 		style = style.BorderForeground(lipgloss.Color("#0087ff"))
 	}
-	if content == "" {
+
+	isPermissionCol := cellIndex%7 >= 4
+	switch content {
+	case "":
 		content = "nil"
+	case "true":
+		if isPermissionCol {
+			style = style.Foreground(lipgloss.Color("#008000"))
+		}
+	case "false":
+		if isPermissionCol {
+			style = style.Foreground(lipgloss.Color("#FF8080"))
+		}
 	}
+
 	if maxContentLength > 3 && len(content) > maxContentLength {
 		return style.Render(content[:maxContentLength-3] + "...")
 	}
@@ -245,4 +257,48 @@ func (m *model) renderAddResourceForm() string {
 	}
 
 	return b.String()
+}
+
+func (m model) ToggleResourceTableCell(resourceName, tableName string) {
+	resource, ok := state.AppState.ResourceContract.Resources[resourceName]
+	if !ok || resource.DB == nil {
+		return
+	}
+
+	table, ok := resource.DB.Tables[tableName]
+	if !ok {
+		return
+	}
+
+	var fieldNames []string
+	for name := range table.Fields {
+		fieldNames = append(fieldNames, name)
+	}
+	sort.Strings(fieldNames)
+
+	row := m.selectedResourceTableCell / 7
+	if row <= 0 || row-1 >= len(fieldNames) {
+		return
+	}
+
+	selectedFieldName := fieldNames[row-1]
+	selectedField := table.Fields[selectedFieldName]
+
+	col := m.selectedResourceTableCell % 7
+	switch col {
+	case 4:
+		selectedField.Read = !selectedField.Read
+	case 5:
+		selectedField.Write = !selectedField.Write
+	case 6:
+		selectedField.Mutable = !selectedField.Mutable
+	default:
+		return
+	}
+
+	table.Fields[selectedFieldName] = selectedField
+	resource.DB.Tables[tableName] = table
+	state.AppState.ResourceContract.Resources[resourceName] = resource
+
+	state.WriteToResourceFile()
 }

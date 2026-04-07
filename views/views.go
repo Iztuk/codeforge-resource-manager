@@ -263,6 +263,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.selectedResourceTableCell = prev
 				}
 				return m, nil
+			case "enter", "space":
+				m.ToggleResourceTableCell(m.selectedResource, m.CurrentMenuSelection())
+				return m, nil
 			}
 		}
 	}
