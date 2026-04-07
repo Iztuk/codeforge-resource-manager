@@ -6,6 +6,10 @@ import (
 )
 
 func NormalizeSQLiteTables(sqliteTables []SQLiteTable) map[string]contracts.DBTable {
+	if sqliteTables == nil {
+		return make(map[string]contracts.DBTable)
+	}
+
 	tables := make(map[string]contracts.DBTable)
 
 	for _, t := range sqliteTables {
