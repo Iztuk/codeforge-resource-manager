@@ -52,6 +52,7 @@ func AddDb(name, address string) []error {
 		}
 	default:
 		errors = append(errors, fmt.Errorf("Invalid database dialect: %s, select from the following: sqlite", dialect))
+		return errors
 	}
 
 	state.AppState.ResourceContract.Resources[name] = contracts.Resource{
