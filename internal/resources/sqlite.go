@@ -3,7 +3,6 @@ package resources
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -55,27 +54,25 @@ func CheckSQLiteConnection(path string) error {
 	return nil
 }
 
-func GetSQLiteTables(path string, tableNames []string) []SQLiteTable {
+func GetSQLiteTables(path string) ([]SQLiteTable, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		log.Fatalf("An error occurred: %s", err.Error())
+		return []SQLiteTable{}, err
 	}
 	defer db.Close()
 
-	if len(tableNames) == 0 {
-		rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
-		if err != nil {
-			log.Fatalf("An error occurred: %s", err.Error())
-		}
+	var tableNames []string
+	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+	if err != nil {
+		return []SQLiteTable{}, err
+	}
 
-		for rows.Next() {
-			var tableName string
-			if err := rows.Scan(&tableName); err != nil {
-				log.Fatalf("An error occurred: %s", err.Error())
-			}
-			tableNames = append(tableNames, tableName)
+	for rows.Next() {
+		var tableName string
+		if err := rows.Scan(&tableName); err != nil {
+			return []SQLiteTable{}, err
 		}
-
+		tableNames = append(tableNames, tableName)
 	}
 
 	var sqliteTables []SQLiteTable
@@ -85,7 +82,7 @@ func GetSQLiteTables(path string, tableNames []string) []SQLiteTable {
 		}
 		rows, err := db.Query(fmt.Sprintf("PRAGMA table_info(%s)", tableName))
 		if err != nil {
-			log.Fatalf("An error occurred: %s", err.Error())
+			return []SQLiteTable{}, err
 		}
 
 		for rows.Next() {
@@ -96,7 +93,7 @@ func GetSQLiteTables(path string, tableNames []string) []SQLiteTable {
 			var pk int
 
 			if err := rows.Scan(&cid, &name, &typ, &notnull, &dflt, &pk); err != nil {
-				log.Fatalf("An error occurred: %s", err.Error())
+				return []SQLiteTable{}, err
 			}
 
 			var col SQLiteColumn = SQLiteColumn{
@@ -115,14 +112,14 @@ func GetSQLiteTables(path string, tableNames []string) []SQLiteTable {
 		// --- unique keys (excluding pk) ---
 		idxRows, err := db.Query(fmt.Sprintf("PRAGMA index_list(%s)", tableName))
 		if err != nil {
-			log.Fatalf("error: %s", err)
+			return []SQLiteTable{}, err
 		}
 
 		var uniqueIndexNames []string
 		for idxRows.Next() {
 			var r sqliteIndexRow
 			if err := idxRows.Scan(&r.Seq, &r.Name, &r.Unique, &r.Origin, &r.Partial); err != nil {
-				log.Fatalf("error: %s", err)
+				return []SQLiteTable{}, err
 			}
 
 			if r.Unique == 1 && r.Origin != "pk" {
@@ -134,7 +131,7 @@ func GetSQLiteTables(path string, tableNames []string) []SQLiteTable {
 		for _, idxName := range uniqueIndexNames {
 			infoRows, err := db.Query(fmt.Sprintf("PRAGMA index_info(%s)", idxName))
 			if err != nil {
-				log.Fatalf("error: %s", err)
+				return []SQLiteTable{}, err
 			}
 
 			colsBySeq := map[int]string{}
@@ -142,7 +139,7 @@ func GetSQLiteTables(path string, tableNames []string) []SQLiteTable {
 			for infoRows.Next() {
 				var ir sqliteIndexInfoRow
 				if err := infoRows.Scan(&ir.SeqNo, &ir.CID, &ir.Name); err != nil {
-					log.Fatalf("error: %s", err)
+					return []SQLiteTable{}, err
 				}
 				colsBySeq[ir.SeqNo] = ir.Name
 				if ir.SeqNo > maxSeq {
@@ -168,9 +165,9 @@ func GetSQLiteTables(path string, tableNames []string) []SQLiteTable {
 	}
 
 	if len(sqliteTables) == 0 {
-		return nil
+		return nil, nil
 	} else {
-		return sqliteTables
+		return sqliteTables, nil
 	}
 }
 

@@ -19,7 +19,6 @@ const (
 
 type DB struct {
 	Dialect string             `json:"dialect"`
-	Addr    string             `json:"addr"`
 	Tables  map[string]DBTable `json:"tables"`
 }
 

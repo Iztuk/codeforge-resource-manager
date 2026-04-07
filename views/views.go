@@ -155,6 +155,14 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				m.addResourceFormErrors = make([]error, 0)
 				m.addResourceFormErrors = append(m.addResourceFormErrors, resources.AddDb(m.nameInput.Value(), m.addrInput.Value())...)
+
+				if len(m.addResourceFormErrors) == 0 {
+					m.nameInput.Reset()
+					m.addrInput.Reset()
+					m.activeScreen = ScreenMenubar
+					m.contentMode = ContentPreview
+				}
+
 				return m, nil
 			}
 

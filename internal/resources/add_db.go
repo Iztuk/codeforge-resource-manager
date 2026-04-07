@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"resource-manager/internal/contracts"
 	"resource-manager/internal/state"
 	"strings"
 )
@@ -28,14 +29,43 @@ func AddDb(name, address string) []error {
 		return errors
 	}
 
+	var normalizedTables map[string]contracts.DBTable
 	switch dialect {
 	case "sqlite":
-		errors = append(errors, CheckSQLiteConnection(strings.TrimPrefix(addr, "sqlite://")))
+		addr = strings.TrimPrefix(addr, "sqlite://")
+		if err := CheckSQLiteConnection(addr); err != nil {
+			errors = append(errors, err)
+			return errors
+		}
+
+		tables, err := GetSQLiteTables(addr)
+		if err != nil {
+			errors = append(errors, err)
+			return errors
+		}
+
+		if len(tables) > 0 {
+			normalizedTables = NormalizeSQLiteTables(tables)
+		}
 	default:
 		errors = append(errors, fmt.Errorf("Invalid database dialect: %s, select from the following: sqlite", dialect))
 	}
 
-	return errors
+	state.AppState.ResourceContract.Resources[name] = contracts.Resource{
+		Name: name,
+		Type: "database",
+		DB: &contracts.DB{
+			Dialect: dialect,
+			Tables:  normalizedTables,
+		},
+	}
+
+	if err := state.WriteToResourceFile(); err != nil {
+		errors = append(errors, err)
+		return errors
+	}
+
+	return nil
 }
 
 func isValidDbConfig(name, dialect, addr string) []error {
