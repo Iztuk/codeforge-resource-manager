@@ -66,6 +66,7 @@ func GetSQLiteTables(path string) ([]SQLiteTable, error) {
 	if err != nil {
 		return []SQLiteTable{}, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var tableName string
