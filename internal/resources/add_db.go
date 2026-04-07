@@ -80,10 +80,8 @@ func isValidDbConfig(name, dialect, addr string) []error {
 		errors = append(errors, fmt.Errorf("please provide a unique resource name"))
 	}
 
-	if dialect == "sqlite" || dialect == "postgres" {
-
-	} else {
-		errors = append(errors, fmt.Errorf("please provide a valid DB dialect (sqlite || postgres)"))
+	if dialect != "sqlite" {
+		errors = append(errors, fmt.Errorf("please provide a valid DB dialect (sqlite)"))
 	}
 
 	if addr == "" {
