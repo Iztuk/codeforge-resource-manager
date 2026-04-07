@@ -75,6 +75,9 @@ func GetSQLiteTables(path string) ([]SQLiteTable, error) {
 		}
 		tableNames = append(tableNames, tableName)
 	}
+	if err := rows.Err(); err != nil {
+		return []SQLiteTable{}, err
+	}
 
 	var sqliteTables []SQLiteTable
 	for _, tableName := range tableNames {
