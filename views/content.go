@@ -5,15 +5,25 @@ import (
 	"resource-manager/internal/state"
 	"sort"
 	"strconv"
+	"strings"
 
+	"charm.land/bubbles/v2/textinput"
 	"charm.land/lipgloss/v2"
 )
 
+type ContentMode int
+
+const (
+	ContentPreview ContentMode = iota
+	ContentAddResource
+)
+
 func (m *model) ResetContentSettings() {
-	m.selectedResourceTableCell = 7
+	m.selectedResourceTableCell = 11
 }
 
 func (m *model) GenerateContent() string {
+
 	switch m.currentPage {
 	case HomePage:
 		return "Select an option from the menu."
@@ -21,6 +31,15 @@ func (m *model) GenerateContent() string {
 	case ResourcesPage:
 		switch m.resourceLevel {
 		case ResourceLevelList:
+			if m.contentMode == ContentAddResource {
+				return m.renderAddResourceForm()
+			}
+
+			if m.contentMode == ContentPreview && m.deleteResourceErrors != nil {
+				errStyle := lipgloss.NewStyle().
+					Foreground(lipgloss.Color("#FF0000"))
+				return errStyle.Render(m.deleteResourceErrors.Error())
+			}
 
 		case ResourceLevelTables:
 			tableName := m.CurrentMenuSelection()
@@ -157,4 +176,73 @@ func renderCell(content string, selected bool, width, maxContentLength int) stri
 	}
 
 	return style.Render(content)
+}
+
+func (m *model) initAddResourceForm() {
+	m.nameInput = textinput.New()
+	m.nameInput.Placeholder = "Resource name"
+	m.nameInput.Prompt = ""
+	m.nameInput.SetWidth(30)
+
+	m.addrInput = textinput.New()
+	m.addrInput.Placeholder = "sqlite://path/to/db"
+	m.addrInput.Prompt = ""
+	m.addrInput.SetWidth(40)
+
+	m.focusedInput = 0
+	m.nameInput.Focus()
+	m.addrInput.Blur()
+}
+
+func (m *model) setFocusedInput(index int) {
+	m.focusedInput = index
+
+	m.nameInput.Blur()
+	m.addrInput.Blur()
+
+	switch index {
+	case 0:
+		m.nameInput.Focus()
+	case 1:
+		m.addrInput.Focus()
+	}
+}
+
+func (m *model) moveFormFocus(delta int) {
+	next := m.focusedInput + delta
+	if next < 0 {
+		next = 0
+	}
+	if next > 3 {
+		next = 3
+	}
+	m.setFocusedInput(next)
+}
+
+func (m *model) renderAddResourceForm() string {
+	var b strings.Builder
+
+	b.WriteString("Add Resource\n\n")
+	b.WriteString("Name\n")
+	b.WriteString(m.nameInput.View())
+	b.WriteString("\n\n")
+
+	b.WriteString("Addr\n")
+	b.WriteString(m.addrInput.View())
+	b.WriteString("\n\n")
+
+	errStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FF0000"))
+	for i, err := range m.addResourceFormErrors {
+		if err == nil {
+			continue
+		}
+		b.WriteString("\u2022 ")
+		b.WriteString(errStyle.Render(err.Error()))
+		if i < len(m.addResourceFormErrors)-1 {
+			b.WriteString("\n")
+		}
+	}
+
+	return b.String()
 }

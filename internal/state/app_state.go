@@ -16,6 +16,11 @@ type ApplicationState struct {
 
 var AppState ApplicationState
 
+var (
+	apiContractFile      string
+	resourceContractFile string
+)
+
 // NOTE: Add some validation logic in the future to prevent silent bugs involving broken contract structure
 func (as *ApplicationState) InitializeAppState(api, resource string) error {
 	a, err := os.ReadFile(api)
@@ -41,6 +46,9 @@ func (as *ApplicationState) InitializeAppState(api, resource string) error {
 	as.ApiContract = apiContract
 	as.ResourceContract = resourceContract
 
+	apiContractFile = api
+	resourceContractFile = resource
+
 	return nil
 }
 
@@ -56,4 +64,28 @@ func decodeStrictJSON(data []byte, v any) error {
 	}
 
 	return nil
+}
+
+func WriteToResourceFile() error {
+	jsonData, err := json.MarshalIndent(AppState.ResourceContract, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(resourceContractFile, jsonData, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DeleteResource(name string) error {
+	err := WriteToResourceFile()
+	if err == nil {
+		delete(AppState.ResourceContract.Resources, name)
+		return nil
+	}
+
+	return err
 }
