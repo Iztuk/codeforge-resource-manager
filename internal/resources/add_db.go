@@ -22,6 +22,10 @@ func AddDb(name, address string) []error {
 	}
 
 	s := strings.Split(address, "://")
+	if len(s) < 2 {
+		errors = append(errors, fmt.Errorf("invalid address format: expected dialect://path"))
+		return errors
+	}
 	dialect, addr := strings.ToLower(s[0]), strings.ToLower(s[1])
 
 	errors = append(errors, isValidDbConfig(name, dialect, addr)...)
@@ -32,7 +36,6 @@ func AddDb(name, address string) []error {
 	var normalizedTables map[string]contracts.DBTable
 	switch dialect {
 	case "sqlite":
-		addr = strings.TrimPrefix(addr, "sqlite://")
 		if err := CheckSQLiteConnection(addr); err != nil {
 			errors = append(errors, err)
 			return errors
