@@ -75,6 +75,7 @@ func GetSQLiteTables(path string) ([]SQLiteTable, error) {
 		}
 		tableNames = append(tableNames, tableName)
 	}
+
 	if err := rows.Err(); err != nil {
 		return []SQLiteTable{}, err
 	}
@@ -149,6 +150,9 @@ func GetSQLiteTables(path string) ([]SQLiteTable, error) {
 				if ir.SeqNo > maxSeq {
 					maxSeq = ir.SeqNo
 				}
+			}
+			if err := infoRows.Err(); err != nil {
+				return []SQLiteTable{}, err
 			}
 			infoRows.Close()
 
