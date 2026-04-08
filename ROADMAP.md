@@ -45,3 +45,20 @@ Allow users to modify field-level access rules for a resource table.
 - Select editable permission cells ('read', 'write', 'mutable')
 - Toggle permission values between 'true' and 'false'
 - Persist field permission changes back to the resource contract file
+
+## Resource Binding List
+
+**Goal**  
+Display API endpoints from the API contracts file and allow users to browse and inspect bindings between resources and endpoints.
+
+**Includes**
+
+- Load API contract data into application state
+- Parse endpoints from OpenAPI / contracts file
+- Display endpoints in the menu pane
+- Support navigation through endpoints list
+- Show endpoint details in the content pane:
+  - HTTP method (GET, POST, PATCH, DELETE)
+  - Route/path
+  - Associated resource (via `x-resource` or equivalent metadata)
+  - Operation type (readMany, readOne, create, update, delete)
