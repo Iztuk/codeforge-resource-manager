@@ -159,22 +159,30 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			case "enter":
-				if m.resourceLevel != ResourceLevelTables && m.currentPage != BindResourcePage {
+				if m.resourceLevel != ResourceLevelTables && m.bindLevel != PathItem {
 					m.SelectMenuItem()
 					m.menuIndex = 0
 				}
 				return m, nil
 			case "backspace":
-				page, t := m.pageHistory.Pop()
-				if !t {
-					m.currentPage = HomePage
-					return m, nil
-				}
 				if m.resourceLevel == ResourceLevelTables {
 					m.resourceLevel = ResourceLevelList
 					m.currentPage = ResourcesPage
 
 					m.menuIndex = 0
+					return m, nil
+				}
+				if m.bindLevel == PathItem {
+					m.bindLevel = PathList
+					m.currentPage = BindResourcePage
+
+					m.menuIndex = 0
+					return m, nil
+				}
+
+				page, t := m.pageHistory.Pop()
+				if !t {
+					m.currentPage = HomePage
 					return m, nil
 				}
 				m.currentPage = page

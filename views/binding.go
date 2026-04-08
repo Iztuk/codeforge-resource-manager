@@ -144,3 +144,31 @@ func methodColor(method string) color.Color {
 		return lipgloss.Color("#FFFFFF")
 	}
 }
+
+func GeneratePathItemMethods(pathItem contracts.OpenApiPathItem) []string {
+	var methods []string
+
+	if pathItem.GET != nil {
+		methods = append(methods, "GET")
+	}
+	if pathItem.POST != nil {
+		methods = append(methods, "POST")
+	}
+	if pathItem.PUT != nil {
+		methods = append(methods, "PUT")
+	}
+	if pathItem.PATCH != nil {
+		methods = append(methods, "PATCH")
+	}
+	if pathItem.DELETE != nil {
+		methods = append(methods, "DELETE")
+	}
+	if pathItem.HEAD != nil {
+		methods = append(methods, "HEAD")
+	}
+	if pathItem.OPTIONS != nil {
+		methods = append(methods, "OPTIONS")
+	}
+
+	return methods
+}
