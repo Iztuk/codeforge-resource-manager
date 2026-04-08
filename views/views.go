@@ -80,7 +80,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 
-		m.menuWidth = 24
+		m.menuWidth = m.width / 5
 		m.contentWidth = max(20, m.width-m.menuWidth)
 
 		contentHeight := m.height - 6
@@ -155,7 +155,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			case "enter":
-				if m.resourceLevel != ResourceLevelTables {
+				if m.resourceLevel != ResourceLevelTables && m.currentPage != BindResourcePage {
 					m.SelectMenuItem()
 					m.menuIndex = 0
 				}
