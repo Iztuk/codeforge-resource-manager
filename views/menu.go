@@ -15,6 +15,13 @@ const (
 	ResourceLevelTables
 )
 
+type BindViewLevel int
+
+const (
+	PathList BindViewLevel = iota
+	PathItem
+)
+
 func (m model) GenerateMenuItems(menuItems []string, width int) string {
 	width = width - 4
 	style := lipgloss.NewStyle().

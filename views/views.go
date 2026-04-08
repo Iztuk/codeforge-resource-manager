@@ -40,6 +40,10 @@ type model struct {
 	selectedResourceTableCell       int
 	selectedResourceTableCellLength int
 
+	bindLevel        BindViewLevel
+	selectedPath     string
+	selectedPathItem string
+
 	contentMode  ContentMode
 	focusedInput int
 

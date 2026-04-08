@@ -51,7 +51,11 @@ func (m *model) GenerateContent() string {
 		}
 
 	case BindResourcePage:
-		return "Bind Resource page"
+		switch m.bindLevel {
+		case PathList:
+			return m.GeneratePathListContent()
+		case PathItem:
+		}
 	}
 
 	return ""
