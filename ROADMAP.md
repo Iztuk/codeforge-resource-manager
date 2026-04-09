@@ -62,3 +62,33 @@ Display API endpoints from the API contracts file and allow users to browse and 
   - Route/path
   - Associated resource (via `x-resource` or equivalent metadata)
   - Operation type (readMany, readOne, create, update, delete)
+
+## Resource Binding Management
+
+### Goal
+
+Enable users to define and manage **resource bindings** between API operations and underlying data resources using the `x-resource` extension.
+
+This allows API endpoints to be explicitly linked to resource contracts, enabling validation, auditing, and enforcement of data access rules.
+
+### Includes
+
+#### Add Resource Binding
+
+- Select an API endpoint (path + method)
+- Launch binding workflow
+- Choose resource to bind (`resourceName.tableName`)
+- Attach binding to the operation via `x-resource`
+- Persist changes to the API contract document
+
+#### Remove Resource Binding
+
+- Select an API endpoint (path + method)
+- Remove existing `x-resource` binding
+- Persist changes to the API contract document
+
+### Design Notes
+
+- `x-resource` acts as a bridge between API contracts and resource definitions
+- Designed to support CodeForge Observer's runtime auditing against **field level permissions**
+- UI will reuse existing navigation and selection patterns for consistency
