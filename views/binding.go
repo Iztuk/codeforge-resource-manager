@@ -17,6 +17,9 @@ func (m *model) GeneratePathListContent() string {
 		paths = append(paths, key)
 	}
 	sort.Strings(paths)
+	if len(paths) == 0 || m.menuIndex < 0 || m.menuIndex >= len(paths) {
+		return ""
+	}
 	m.selectedPath = paths[m.menuIndex]
 
 	return generatePathListContentStrings(m.selectedPath, m.contentWidth)
