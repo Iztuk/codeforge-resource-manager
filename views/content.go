@@ -55,6 +55,7 @@ func (m *model) GenerateContent() string {
 		case PathList:
 			return m.GeneratePathListContent()
 		case PathItem:
+			return m.GeneratePathItemContent()
 		}
 	}
 

@@ -34,25 +34,25 @@ func generatePathListContentStrings(path string, width int) string {
 	var methodCards []string
 
 	if pathItem.GET != nil {
-		methodCards = append(methodCards, generateOpenApiOperationStrings("GET", pathItem.GET, width))
+		methodCards = append(methodCards, generateOpenApiOperationCardStrings("GET", pathItem.GET, width))
 	}
 	if pathItem.POST != nil {
-		methodCards = append(methodCards, generateOpenApiOperationStrings("POST", pathItem.POST, width))
+		methodCards = append(methodCards, generateOpenApiOperationCardStrings("POST", pathItem.POST, width))
 	}
 	if pathItem.PUT != nil {
-		methodCards = append(methodCards, generateOpenApiOperationStrings("PUT", pathItem.PUT, width))
+		methodCards = append(methodCards, generateOpenApiOperationCardStrings("PUT", pathItem.PUT, width))
 	}
 	if pathItem.PATCH != nil {
-		methodCards = append(methodCards, generateOpenApiOperationStrings("PATCH", pathItem.PATCH, width))
+		methodCards = append(methodCards, generateOpenApiOperationCardStrings("PATCH", pathItem.PATCH, width))
 	}
 	if pathItem.DELETE != nil {
-		methodCards = append(methodCards, generateOpenApiOperationStrings("DELETE", pathItem.DELETE, width))
+		methodCards = append(methodCards, generateOpenApiOperationCardStrings("DELETE", pathItem.DELETE, width))
 	}
 	if pathItem.HEAD != nil {
-		methodCards = append(methodCards, generateOpenApiOperationStrings("HEAD", pathItem.HEAD, width))
+		methodCards = append(methodCards, generateOpenApiOperationCardStrings("HEAD", pathItem.HEAD, width))
 	}
 	if pathItem.OPTIONS != nil {
-		methodCards = append(methodCards, generateOpenApiOperationStrings("OPTIONS", pathItem.OPTIONS, width))
+		methodCards = append(methodCards, generateOpenApiOperationCardStrings("OPTIONS", pathItem.OPTIONS, width))
 	}
 
 	methodColumn := lipgloss.JoinVertical(lipgloss.Center, methodCards...)
@@ -64,7 +64,7 @@ func generatePathListContentStrings(path string, width int) string {
 	)
 }
 
-func generateOpenApiOperationStrings(method string, operation *contracts.OpenApiOperation, width int) string {
+func generateOpenApiOperationCardStrings(method string, operation *contracts.OpenApiOperation, width int) string {
 	cardWidth := max(24, width/2)
 
 	cardStyle := lipgloss.NewStyle().
@@ -124,6 +124,61 @@ func generateOpenApiOperationStrings(method string, operation *contracts.OpenApi
 	return cardStyle.Render(cardColumn)
 }
 
+func generateOpenApiOperationStrings(method string, operation *contracts.OpenApiOperation, width int) string {
+	methodStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(methodColor(method)).
+		Width(width).
+		Align(lipgloss.Left).
+		Padding(1)
+
+	labelStyle := lipgloss.NewStyle().
+		Bold(true)
+
+	contentStyle := lipgloss.NewStyle().
+		Width(width).
+		Align(lipgloss.Left).
+		Padding(0, 1, 0, 1)
+
+	var rows []string
+
+	rows = append(rows, methodStyle.Render(method))
+
+	if operation.OperationID != "" {
+		rows = append(rows, contentStyle.Render(
+			labelStyle.Render("Operation ID: ")+operation.OperationID,
+		))
+	}
+
+	if operation.Summary != "" {
+		rows = append(rows, contentStyle.Render(
+			labelStyle.Render("Summary: ")+operation.Summary,
+		))
+	}
+
+	if operation.Description != "" {
+		rows = append(rows, contentStyle.Render(
+			labelStyle.Render("Description: ")+operation.Description,
+		))
+	}
+
+	if len(operation.Tags) > 0 {
+		rows = append(rows, contentStyle.Render(
+			labelStyle.Render("Tags: ")+strings.Join(operation.Tags, ", "),
+		))
+	}
+
+	if operation.XResource != nil {
+		rows = append(rows, contentStyle.Render(
+			labelStyle.Render(fmt.Sprintf("Resource: %s.%s", operation.XResource.ResourceName, operation.XResource.Table)),
+		))
+	}
+
+	cardColumn := lipgloss.JoinVertical(lipgloss.Left, rows...)
+
+	return cardColumn
+}
+
 func methodColor(method string) color.Color {
 	switch method {
 	case "GET":
@@ -171,4 +226,27 @@ func GeneratePathItemMethods(pathItem contracts.OpenApiPathItem) []string {
 	}
 
 	return methods
+}
+
+func (m *model) GeneratePathItemContent() string {
+	pathItem := state.AppState.ApiContract.Paths[m.selectedPath]
+	pathItemMethods := GeneratePathItemMethods(state.AppState.ApiContract.Paths[m.selectedPath])
+
+	switch pathItemMethods[m.menuIndex] {
+	case "GET":
+		return generateOpenApiOperationStrings("GET", pathItem.GET, m.contentWidth)
+	case "POST":
+		return generateOpenApiOperationStrings("POST", pathItem.POST, m.contentWidth)
+	case "PUT":
+		return generateOpenApiOperationStrings("PUT", pathItem.PUT, m.contentWidth)
+	case "PATCH":
+		return generateOpenApiOperationStrings("PATCH", pathItem.PATCH, m.contentWidth)
+	case "DELETE":
+		return generateOpenApiOperationStrings("DELETE", pathItem.DELETE, m.contentWidth)
+	case "HEAD":
+		return generateOpenApiOperationStrings("HEAD", pathItem.HEAD, m.contentWidth)
+	case "OPTIONS":
+		return generateOpenApiOperationStrings("OPTIONS", pathItem.OPTIONS, m.contentWidth)
+	}
+	return ""
 }
