@@ -81,10 +81,8 @@ type OpenApiSchemaRef struct {
 }
 
 type RouteResourceBinding struct {
-	ResourceName string     `json:"resource_name"`
-	Table        string     `json:"table"` // e.g. "tableName"
-	Identity     []string   `json:"identity,omitempty"`
-	Operation    ResourceOp `json:"operation,omitempty"` // "readOne" | "readMany" | "create" | "update" | "partialUpdate" | "delete"
+	ResourceName string `json:"resource_name"`
+	Table        string `json:"table"` // e.g. "tableName"
 }
 
 type ResourceOp string

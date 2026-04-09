@@ -354,7 +354,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter":
 				selected := m.currentSelectedBindResource()
 				if selected != "" {
-
+					m.BindResourceToEndpoint(selected)
+					m.contentMode = ContentPreview
+					m.activeScreen = ScreenMenubar
 				}
 				return m, nil
 			}
@@ -429,7 +431,8 @@ func (m *model) titleView(width, height int) string {
 		case PathList:
 			return style.Render("Bind Resource")
 		case PathItem:
-			return style.Render(m.selectedPath)
+			return style.Render(m.debug)
+			// return style.Render(m.selectedPath)
 		}
 	}
 

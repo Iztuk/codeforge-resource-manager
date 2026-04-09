@@ -305,6 +305,7 @@ type BindResourceRow struct {
 	Values  []string
 }
 
+// TODO: Add some validation for rendering resource binding options based on the permissions (ex. if user selects a GET endpoint and resource table does not allow any fields to be readable, do not render)
 func (m *model) GenerateBindResourceOptions() string {
 	resources := state.AppState.ResourceContract.Resources
 
@@ -434,4 +435,71 @@ func (m *model) currentSelectedBindResource() string {
 		}
 	}
 	return ""
+}
+
+func (m *model) BindResourceToEndpoint(selectedResource string) {
+	if selectedResource == "" || !strings.Contains(selectedResource, ".") {
+		return
+	}
+	s := strings.Split(selectedResource, ".")
+	resourceName, tableName := s[0], s[1]
+
+	resource, ok := state.AppState.ResourceContract.Resources[resourceName]
+	if !ok || resource.DB == nil {
+		return
+	}
+
+	_, ok = resource.DB.Tables[tableName]
+	if !ok {
+		return
+	}
+
+	path, ok := state.AppState.ApiContract.Paths[m.selectedPath]
+	if !ok {
+		return
+	}
+
+	resourceBinding := &contracts.RouteResourceBinding{
+		ResourceName: resourceName,
+		Table:        tableName,
+	}
+
+	methods := m.CurrentMenuItems()
+	method := methods[m.menuIndex]
+	switch method {
+	case "GET":
+		if path.GET != nil {
+			path.GET.XResource = resourceBinding
+		}
+	case "POST":
+		if path.POST != nil {
+			path.POST.XResource = resourceBinding
+		}
+	case "PUT":
+		if path.PUT != nil {
+			path.PUT.XResource = resourceBinding
+		}
+	case "PATCH":
+		if path.PATCH != nil {
+			path.PATCH.XResource = resourceBinding
+		}
+	case "DELETE":
+		if path.DELETE != nil {
+			path.DELETE.XResource = resourceBinding
+		}
+	case "HEAD":
+		if path.HEAD != nil {
+			path.HEAD.XResource = resourceBinding
+		}
+	case "OPTIONS":
+		if path.OPTIONS != nil {
+			path.OPTIONS.XResource = resourceBinding
+		}
+	default:
+		return
+	}
+
+	state.AppState.ApiContract.Paths[m.selectedPath] = path
+
+	state.WriteToContractFile()
 }
