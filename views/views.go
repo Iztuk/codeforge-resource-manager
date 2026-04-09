@@ -45,7 +45,7 @@ type model struct {
 	selectedPathItem         string
 	selectedBindResourceCell int
 	bindResourceCellLength   int
-	bindingCols              int
+	bindResourceRows         []BindResourceRow
 
 	contentMode  ContentMode
 	focusedInput int
@@ -308,20 +308,55 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.selectedBindResourceCell--
 				}
 				return m, nil
+
 			case "l":
 				if m.selectedBindResourceCell+1 < m.bindResourceCellLength {
 					m.selectedBindResourceCell++
 				}
 				return m, nil
+
 			case "j":
-				if (m.selectedBindResourceCell + m.bindingCols) < m.bindResourceCellLength {
-					m.selectedBindResourceCell += m.bindingCols
+				row, col, ok := m.findBindResourcePosition()
+				if !ok {
+					return m, nil
 				}
+
+				nextRow := row + 1
+				if nextRow >= len(m.bindResourceRows) {
+					return m, nil
+				}
+
+				if col >= len(m.bindResourceRows[nextRow].Indices) {
+					col = len(m.bindResourceRows[nextRow].Indices) - 1
+				}
+
+				m.selectedBindResourceCell = m.bindResourceRows[nextRow].Indices[col]
+				return m, nil
+
 			case "k":
-				if (m.selectedBindResourceCell - m.bindingCols) >= 0 {
-					m.selectedBindResourceCell -= m.bindingCols
+				row, col, ok := m.findBindResourcePosition()
+				if !ok {
+					return m, nil
 				}
+
+				prevRow := row - 1
+				if prevRow < 0 {
+					return m, nil
+				}
+
+				if col >= len(m.bindResourceRows[prevRow].Indices) {
+					col = len(m.bindResourceRows[prevRow].Indices) - 1
+				}
+
+				m.selectedBindResourceCell = m.bindResourceRows[prevRow].Indices[col]
+				return m, nil
+
 			case "enter":
+				selected := m.currentSelectedBindResource()
+				if selected != "" {
+
+				}
+				return m, nil
 			}
 		}
 	}

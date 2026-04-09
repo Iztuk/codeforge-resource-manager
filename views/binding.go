@@ -300,6 +300,11 @@ func (m *model) RemoveResourceBinding() {
 	state.WriteToContractFile()
 }
 
+type BindResourceRow struct {
+	Indices []int
+	Values  []string
+}
+
 func (m *model) GenerateBindResourceOptions() string {
 	resources := state.AppState.ResourceContract.Resources
 
@@ -335,9 +340,13 @@ func (m *model) GenerateBindResourceOptions() string {
 		sort.Strings(grouped[resName])
 	}
 
+	if longest == 0 {
+		m.bindResourceRows = nil
+		return ""
+	}
+
 	cols := max(1, (m.contentWidth/longest)-1)
 	colWidth := max(8, (m.contentWidth/cols)-3)
-	m.bindingCols = cols
 
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
@@ -347,6 +356,9 @@ func (m *model) GenerateBindResourceOptions() string {
 
 	var sections []string
 	selectedIndex := 0
+
+	// reset and rebuild navigation rows every render
+	m.bindResourceRows = nil
 
 	for _, resName := range resourceNames {
 		var sectionParts []string
@@ -360,18 +372,24 @@ func (m *model) GenerateBindResourceOptions() string {
 			end := min(i+cols, len(tables))
 			var cells []string
 
+			rowMeta := BindResourceRow{}
+
 			for j := i; j < end; j++ {
 				cells = append(cells,
 					renderResourceBindingOptionsCell(
 						tables[j],
 						selectedIndex == m.selectedBindResourceCell,
 						colWidth,
-						selectedIndex,
 					),
 				)
+
+				rowMeta.Indices = append(rowMeta.Indices, selectedIndex)
+				rowMeta.Values = append(rowMeta.Values, tables[j])
+
 				selectedIndex++
 			}
 
+			m.bindResourceRows = append(m.bindResourceRows, rowMeta)
 			rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Top, cells...))
 		}
 
@@ -382,7 +400,7 @@ func (m *model) GenerateBindResourceOptions() string {
 	return lipgloss.JoinVertical(lipgloss.Top, sections...)
 }
 
-func renderResourceBindingOptionsCell(content string, selected bool, width, cellIndex int) string {
+func renderResourceBindingOptionsCell(content string, selected bool, width int) string {
 	style := lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		Height(3).
@@ -394,4 +412,26 @@ func renderResourceBindingOptionsCell(content string, selected bool, width, cell
 	}
 
 	return style.Render(content)
+}
+
+func (m *model) findBindResourcePosition() (row int, col int, ok bool) {
+	for r, bindRow := range m.bindResourceRows {
+		for c, idx := range bindRow.Indices {
+			if idx == m.selectedBindResourceCell {
+				return r, c, true
+			}
+		}
+	}
+	return 0, 0, false
+}
+
+func (m *model) currentSelectedBindResource() string {
+	for _, bindRow := range m.bindResourceRows {
+		for i, idx := range bindRow.Indices {
+			if idx == m.selectedBindResourceCell {
+				return bindRow.Values[i]
+			}
+		}
+	}
+	return ""
 }
