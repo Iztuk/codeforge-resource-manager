@@ -234,6 +234,9 @@ func GeneratePathItemMethods(pathItem contracts.OpenApiPathItem) []string {
 func (m *model) GeneratePathItemContent() string {
 	pathItem := state.AppState.ApiContract.Paths[m.selectedPath]
 	pathItemMethods := GeneratePathItemMethods(state.AppState.ApiContract.Paths[m.selectedPath])
+	if len(pathItemMethods) == 0 || m.menuIndex < 0 || m.menuIndex >= len(pathItemMethods) {
+		return ""
+	}
 
 	switch pathItemMethods[m.menuIndex] {
 	case "GET":
