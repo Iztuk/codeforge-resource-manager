@@ -149,10 +149,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.currentPage == BindResourcePage && m.bindLevel == PathItem {
 			switch msg.String() {
 			case "ctrl+a":
-				m.debug = "ctrl+a pressed"
 				return m, nil
 			case "ctrl+d":
-				m.debug = "ctrl+d pressd"
 				m.RemoveResourceBinding()
 				return m, nil
 			}
@@ -360,7 +358,12 @@ func (m *model) titleView(width, height int) string {
 			return style.Render(m.selectedResource)
 		}
 	case BindResourcePage:
-		return style.Render(m.debug)
+		switch m.bindLevel {
+		case PathList:
+			return style.Render("Bind Resource")
+		case PathItem:
+			return style.Render(m.selectedPath)
+		}
 	}
 
 	return style.Render("CodeForge Resource Manager")

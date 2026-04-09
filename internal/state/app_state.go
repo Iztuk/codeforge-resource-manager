@@ -89,3 +89,17 @@ func DeleteResource(name string) error {
 
 	return err
 }
+
+func WriteToContractFile() error {
+	jsonData, err := json.MarshalIndent(AppState.ApiContract, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(apiContractFile, jsonData, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

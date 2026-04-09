@@ -297,4 +297,5 @@ func (m *model) RemoveResourceBinding() {
 	}
 
 	state.AppState.ApiContract.Paths[m.selectedPath] = path
+	state.WriteToContractFile()
 }
