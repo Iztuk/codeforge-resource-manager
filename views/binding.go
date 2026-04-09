@@ -256,3 +256,45 @@ func (m *model) GeneratePathItemContent() string {
 	}
 	return ""
 }
+
+func (m *model) RemoveResourceBinding() {
+	path, ok := state.AppState.ApiContract.Paths[m.selectedPath]
+	if !ok {
+		return
+	}
+
+	switch m.CurrentMenuSelection() {
+	case "GET":
+		if path.GET != nil {
+			path.GET.XResource = nil
+		}
+	case "POST":
+		if path.POST != nil {
+			path.POST.XResource = nil
+		}
+	case "PUT":
+		if path.PUT != nil {
+			path.PUT.XResource = nil
+		}
+	case "PATCH":
+		if path.PATCH != nil {
+			path.PATCH.XResource = nil
+		}
+	case "DELETE":
+		if path.DELETE != nil {
+			path.DELETE.XResource = nil
+		}
+	case "HEAD":
+		if path.HEAD != nil {
+			path.HEAD.XResource = nil
+		}
+	case "OPTIONS":
+		if path.OPTIONS != nil {
+			path.OPTIONS.XResource = nil
+		}
+	default:
+		return
+	}
+
+	state.AppState.ApiContract.Paths[m.selectedPath] = path
+}

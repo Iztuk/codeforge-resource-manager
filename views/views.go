@@ -61,6 +61,8 @@ type model struct {
 	contentWidth    int
 	menuViewport    viewport.Model
 	contentViewport viewport.Model
+
+	debug string
 }
 
 var (
@@ -140,6 +142,18 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				m.deleteResourceErrors = state.DeleteResource(menuItemName)
+				return m, nil
+			}
+		}
+
+		if m.currentPage == BindResourcePage && m.bindLevel == PathItem {
+			switch msg.String() {
+			case "ctrl+a":
+				m.debug = "ctrl+a pressed"
+				return m, nil
+			case "ctrl+d":
+				m.debug = "ctrl+d pressd"
+				m.RemoveResourceBinding()
 				return m, nil
 			}
 		}
@@ -346,7 +360,7 @@ func (m *model) titleView(width, height int) string {
 			return style.Render(m.selectedResource)
 		}
 	case BindResourcePage:
-		return style.Render("Bind Resource")
+		return style.Render(m.debug)
 	}
 
 	return style.Render("CodeForge Resource Manager")
