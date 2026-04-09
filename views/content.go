@@ -16,10 +16,12 @@ type ContentMode int
 const (
 	ContentPreview ContentMode = iota
 	ContentAddResource
+	ContentBindResource
 )
 
 func (m *model) ResetContentSettings() {
 	m.selectedResourceTableCell = 11
+	m.selectedBindResourceCell = 0
 }
 
 func (m *model) GenerateContent() string {
@@ -55,6 +57,9 @@ func (m *model) GenerateContent() string {
 		case PathList:
 			return m.GeneratePathListContent()
 		case PathItem:
+			if m.contentMode == ContentBindResource {
+				return m.GenerateBindResourceOptions()
+			}
 			return m.GeneratePathItemContent()
 		}
 	}

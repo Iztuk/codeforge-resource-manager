@@ -299,3 +299,99 @@ func (m *model) RemoveResourceBinding() {
 	state.AppState.ApiContract.Paths[m.selectedPath] = path
 	state.WriteToContractFile()
 }
+
+func (m *model) GenerateBindResourceOptions() string {
+	resources := state.AppState.ResourceContract.Resources
+
+	grouped := make(map[string][]string)
+	var resourceNames []string
+	longest := 0
+
+	for resName, resource := range resources {
+		if resource.DB == nil {
+			continue
+		}
+
+		resourceNames = append(resourceNames, resName)
+
+		for tableName := range resource.DB.Tables {
+			resourceTable := fmt.Sprintf("%s.%s", resName, tableName)
+			grouped[resName] = append(grouped[resName], resourceTable)
+
+			if len(resourceTable) > longest {
+				longest = len(resourceTable)
+			}
+		}
+	}
+
+	total := 0
+	for _, tables := range grouped {
+		total += len(tables)
+	}
+	m.bindResourceCellLength = total
+
+	sort.Strings(resourceNames)
+	for _, resName := range resourceNames {
+		sort.Strings(grouped[resName])
+	}
+
+	cols := max(1, (m.contentWidth/longest)-1)
+	colWidth := max(8, (m.contentWidth/cols)-3)
+	m.bindingCols = cols
+
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#0087ff")).
+		MarginTop(1).
+		MarginBottom(1)
+
+	var sections []string
+	selectedIndex := 0
+
+	for _, resName := range resourceNames {
+		var sectionParts []string
+
+		sectionParts = append(sectionParts, titleStyle.Render(resName))
+
+		tables := grouped[resName]
+		var rows []string
+
+		for i := 0; i < len(tables); i += cols {
+			end := min(i+cols, len(tables))
+			var cells []string
+
+			for j := i; j < end; j++ {
+				cells = append(cells,
+					renderResourceBindingOptionsCell(
+						tables[j],
+						selectedIndex == m.selectedBindResourceCell,
+						colWidth,
+						selectedIndex,
+					),
+				)
+				selectedIndex++
+			}
+
+			rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Top, cells...))
+		}
+
+		sectionParts = append(sectionParts, lipgloss.JoinVertical(lipgloss.Top, rows...))
+		sections = append(sections, lipgloss.JoinVertical(lipgloss.Top, sectionParts...))
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Top, sections...)
+}
+
+func renderResourceBindingOptionsCell(content string, selected bool, width, cellIndex int) string {
+	style := lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		Height(3).
+		Width(max(1, width-1)).
+		Align(lipgloss.Center, lipgloss.Center)
+
+	if selected {
+		style = style.BorderForeground(lipgloss.Color("#0087ff"))
+	}
+
+	return style.Render(content)
+}

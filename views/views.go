@@ -40,9 +40,12 @@ type model struct {
 	selectedResourceTableCell       int
 	selectedResourceTableCellLength int
 
-	bindLevel        BindViewLevel
-	selectedPath     string
-	selectedPathItem string
+	bindLevel                BindViewLevel
+	selectedPath             string
+	selectedPathItem         string
+	selectedBindResourceCell int
+	bindResourceCellLength   int
+	bindingCols              int
 
 	contentMode  ContentMode
 	focusedInput int
@@ -116,6 +119,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activeScreen > ScreenMenubar {
 				m.activeScreen--
 			}
+			if m.contentMode == ContentBindResource {
+				m.contentMode = ContentPreview
+			}
 			return m, nil
 		case "ctrl+l":
 			if m.activeScreen < ScreenContent {
@@ -149,6 +155,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.currentPage == BindResourcePage && m.bindLevel == PathItem {
 			switch msg.String() {
 			case "ctrl+a":
+				m.activeScreen = ScreenContent
+				m.contentMode = ContentBindResource
 				return m, nil
 			case "ctrl+d":
 				m.RemoveResourceBinding()
@@ -290,6 +298,30 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "enter", "space":
 				m.ToggleResourceTableCell(m.selectedResource, m.CurrentMenuSelection())
 				return m, nil
+			}
+		}
+
+		if m.activeScreen == ScreenContent && m.contentMode == ContentBindResource {
+			switch msg.String() {
+			case "h":
+				if m.selectedBindResourceCell > 0 {
+					m.selectedBindResourceCell--
+				}
+				return m, nil
+			case "l":
+				if m.selectedBindResourceCell+1 < m.bindResourceCellLength {
+					m.selectedBindResourceCell++
+				}
+				return m, nil
+			case "j":
+				if (m.selectedBindResourceCell + m.bindingCols) < m.bindResourceCellLength {
+					m.selectedBindResourceCell += m.bindingCols
+				}
+			case "k":
+				if (m.selectedBindResourceCell - m.bindingCols) >= 0 {
+					m.selectedBindResourceCell -= m.bindingCols
+				}
+			case "enter":
 			}
 		}
 	}
