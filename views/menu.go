@@ -15,6 +15,13 @@ const (
 	ResourceLevelTables
 )
 
+type BindViewLevel int
+
+const (
+	PathList BindViewLevel = iota
+	PathItem
+)
+
 func (m model) GenerateMenuItems(menuItems []string, width int) string {
 	width = width - 4
 	style := lipgloss.NewStyle().
@@ -41,7 +48,7 @@ func (m model) GenerateMenuItems(menuItems []string, width int) string {
 	return b.String()
 }
 
-func (m model) CurrentMenuItems() []string {
+func (m *model) CurrentMenuItems() []string {
 	switch m.currentPage {
 	case HomePage:
 		return []string{
@@ -71,6 +78,36 @@ func (m model) CurrentMenuItems() []string {
 			return tables
 		}
 	case BindResourcePage:
+		switch m.bindLevel {
+		case PathList:
+			if state.AppState.ApiContract.Paths == nil {
+				return []string{}
+			}
+
+			maxContentLength := max(4, m.menuWidth-7)
+
+			var paths []string
+			for key := range state.AppState.ApiContract.Paths {
+				paths = append(paths, key)
+			}
+			sort.Strings(paths)
+
+			formattedPaths := make([]string, len(paths))
+			for i, path := range paths {
+				if len(path) > maxContentLength {
+					formattedPaths[i] = path[:maxContentLength-3] + "..."
+				} else {
+					formattedPaths[i] = path
+				}
+			}
+
+			return formattedPaths
+		case PathItem:
+			pathItem := state.AppState.ApiContract.Paths[m.selectedPath]
+
+			return GeneratePathItemMethods(pathItem)
+		}
+
 	default:
 		return []string{
 			"Resources",
@@ -114,6 +151,25 @@ func (m *model) SelectMenuItem() {
 			return
 		}
 	case BindResourcePage:
+		switch m.bindLevel {
+		case PathList:
+			paths := m.CurrentMenuItems()
+			if m.menuIndex < 0 || m.menuIndex >= len(paths) {
+				return
+			}
+
+			m.selectedPath = paths[m.menuIndex]
+			m.bindLevel = PathItem
+			return
+		case PathItem:
+			pathItems := m.CurrentMenuItems()
+			if m.menuIndex < 0 || m.menuIndex >= len(pathItems) {
+				return
+			}
+
+			m.selectedPathItem = pathItems[m.menuIndex]
+			return
+		}
 	}
 }
 

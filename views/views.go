@@ -40,6 +40,10 @@ type model struct {
 	selectedResourceTableCell       int
 	selectedResourceTableCellLength int
 
+	bindLevel        BindViewLevel
+	selectedPath     string
+	selectedPathItem string
+
 	contentMode  ContentMode
 	focusedInput int
 
@@ -80,7 +84,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 
-		m.menuWidth = 24
+		m.menuWidth = m.width / 5
 		m.contentWidth = max(20, m.width-m.menuWidth)
 
 		contentHeight := m.height - 6
@@ -155,22 +159,30 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			case "enter":
-				if m.resourceLevel != ResourceLevelTables {
+				if m.resourceLevel != ResourceLevelTables && m.bindLevel != PathItem {
 					m.SelectMenuItem()
 					m.menuIndex = 0
 				}
 				return m, nil
 			case "backspace":
-				page, t := m.pageHistory.Pop()
-				if !t {
-					m.currentPage = HomePage
-					return m, nil
-				}
 				if m.resourceLevel == ResourceLevelTables {
 					m.resourceLevel = ResourceLevelList
 					m.currentPage = ResourcesPage
 
 					m.menuIndex = 0
+					return m, nil
+				}
+				if m.bindLevel == PathItem {
+					m.bindLevel = PathList
+					m.currentPage = BindResourcePage
+
+					m.menuIndex = 0
+					return m, nil
+				}
+
+				page, t := m.pageHistory.Pop()
+				if !t {
+					m.currentPage = HomePage
 					return m, nil
 				}
 				m.currentPage = page
