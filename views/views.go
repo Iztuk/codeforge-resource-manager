@@ -40,9 +40,12 @@ type model struct {
 	selectedResourceTableCell       int
 	selectedResourceTableCellLength int
 
-	bindLevel        BindViewLevel
-	selectedPath     string
-	selectedPathItem string
+	bindLevel                BindViewLevel
+	selectedPath             string
+	selectedPathItem         string
+	selectedBindResourceCell int
+	bindResourceCellLength   int
+	bindResourceRows         []BindResourceRow
 
 	contentMode  ContentMode
 	focusedInput int
@@ -61,6 +64,8 @@ type model struct {
 	contentWidth    int
 	menuViewport    viewport.Model
 	contentViewport viewport.Model
+
+	debug string
 }
 
 var (
@@ -114,6 +119,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activeScreen > ScreenMenubar {
 				m.activeScreen--
 			}
+			if m.contentMode == ContentBindResource {
+				m.contentMode = ContentPreview
+			}
 			return m, nil
 		case "ctrl+l":
 			if m.activeScreen < ScreenContent {
@@ -140,6 +148,18 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				m.deleteResourceErrors = state.DeleteResource(menuItemName)
+				return m, nil
+			}
+		}
+
+		if m.currentPage == BindResourcePage && m.bindLevel == PathItem {
+			switch msg.String() {
+			case "ctrl+a":
+				m.activeScreen = ScreenContent
+				m.contentMode = ContentBindResource
+				return m, nil
+			case "ctrl+d":
+				m.RemoveResourceBinding()
 				return m, nil
 			}
 		}
@@ -280,6 +300,67 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		}
+
+		if m.activeScreen == ScreenContent && m.contentMode == ContentBindResource {
+			switch msg.String() {
+			case "h":
+				if m.selectedBindResourceCell > 0 {
+					m.selectedBindResourceCell--
+				}
+				return m, nil
+
+			case "l":
+				if m.selectedBindResourceCell+1 < m.bindResourceCellLength {
+					m.selectedBindResourceCell++
+				}
+				return m, nil
+
+			case "j":
+				row, col, ok := m.findBindResourcePosition()
+				if !ok {
+					return m, nil
+				}
+
+				nextRow := row + 1
+				if nextRow >= len(m.bindResourceRows) {
+					return m, nil
+				}
+
+				if col >= len(m.bindResourceRows[nextRow].Indices) {
+					col = len(m.bindResourceRows[nextRow].Indices) - 1
+				}
+
+				m.selectedBindResourceCell = m.bindResourceRows[nextRow].Indices[col]
+				return m, nil
+
+			case "k":
+				row, col, ok := m.findBindResourcePosition()
+				if !ok {
+					return m, nil
+				}
+
+				prevRow := row - 1
+				if prevRow < 0 {
+					return m, nil
+				}
+
+				if col >= len(m.bindResourceRows[prevRow].Indices) {
+					col = len(m.bindResourceRows[prevRow].Indices) - 1
+				}
+
+				m.selectedBindResourceCell = m.bindResourceRows[prevRow].Indices[col]
+				return m, nil
+
+			case "enter":
+				selected := m.currentSelectedBindResource()
+				if selected != "" {
+					m.BindResourceToEndpoint(selected)
+					m.contentMode = ContentPreview
+					m.activeScreen = ScreenMenubar
+				}
+				return m, nil
+			}
+		}
 	}
 
 	return m, nil
@@ -346,7 +427,13 @@ func (m *model) titleView(width, height int) string {
 			return style.Render(m.selectedResource)
 		}
 	case BindResourcePage:
-		return style.Render("Bind Resource")
+		switch m.bindLevel {
+		case PathList:
+			return style.Render("Bind Resource")
+		case PathItem:
+			return style.Render(m.debug)
+			// return style.Render(m.selectedPath)
+		}
 	}
 
 	return style.Render("CodeForge Resource Manager")

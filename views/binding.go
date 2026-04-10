@@ -256,3 +256,249 @@ func (m *model) GeneratePathItemContent() string {
 	}
 	return ""
 }
+
+func (m *model) RemoveResourceBinding() {
+	path, ok := state.AppState.ApiContract.Paths[m.selectedPath]
+	if !ok {
+		return
+	}
+
+	switch m.CurrentMenuSelection() {
+	case "GET":
+		if path.GET != nil {
+			path.GET.XResource = nil
+		}
+	case "POST":
+		if path.POST != nil {
+			path.POST.XResource = nil
+		}
+	case "PUT":
+		if path.PUT != nil {
+			path.PUT.XResource = nil
+		}
+	case "PATCH":
+		if path.PATCH != nil {
+			path.PATCH.XResource = nil
+		}
+	case "DELETE":
+		if path.DELETE != nil {
+			path.DELETE.XResource = nil
+		}
+	case "HEAD":
+		if path.HEAD != nil {
+			path.HEAD.XResource = nil
+		}
+	case "OPTIONS":
+		if path.OPTIONS != nil {
+			path.OPTIONS.XResource = nil
+		}
+	default:
+		return
+	}
+
+	state.AppState.ApiContract.Paths[m.selectedPath] = path
+	state.WriteToContractFile()
+}
+
+type BindResourceRow struct {
+	Indices []int
+	Values  []string
+}
+
+// TODO: Add some validation for rendering resource binding options based on the permissions (ex. if user selects a GET endpoint and resource table does not allow any fields to be readable, do not render)
+func (m *model) GenerateBindResourceOptions() string {
+	resources := state.AppState.ResourceContract.Resources
+
+	grouped := make(map[string][]string)
+	var resourceNames []string
+	longest := 0
+
+	for resName, resource := range resources {
+		if resource.DB == nil {
+			continue
+		}
+
+		resourceNames = append(resourceNames, resName)
+
+		for tableName := range resource.DB.Tables {
+			resourceTable := fmt.Sprintf("%s.%s", resName, tableName)
+			grouped[resName] = append(grouped[resName], resourceTable)
+
+			if len(resourceTable) > longest {
+				longest = len(resourceTable)
+			}
+		}
+	}
+
+	total := 0
+	for _, tables := range grouped {
+		total += len(tables)
+	}
+	m.bindResourceCellLength = total
+
+	sort.Strings(resourceNames)
+	for _, resName := range resourceNames {
+		sort.Strings(grouped[resName])
+	}
+
+	if longest == 0 {
+		m.bindResourceRows = nil
+		return ""
+	}
+
+	cols := max(1, (m.contentWidth/longest)-1)
+	colWidth := max(8, (m.contentWidth/cols)-3)
+
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#0087ff")).
+		MarginTop(1).
+		MarginBottom(1)
+
+	var sections []string
+	selectedIndex := 0
+
+	// reset and rebuild navigation rows every render
+	m.bindResourceRows = nil
+
+	for _, resName := range resourceNames {
+		var sectionParts []string
+
+		sectionParts = append(sectionParts, titleStyle.Render(resName))
+
+		tables := grouped[resName]
+		var rows []string
+
+		for i := 0; i < len(tables); i += cols {
+			end := min(i+cols, len(tables))
+			var cells []string
+
+			rowMeta := BindResourceRow{}
+
+			for j := i; j < end; j++ {
+				cells = append(cells,
+					renderResourceBindingOptionsCell(
+						tables[j],
+						selectedIndex == m.selectedBindResourceCell,
+						colWidth,
+					),
+				)
+
+				rowMeta.Indices = append(rowMeta.Indices, selectedIndex)
+				rowMeta.Values = append(rowMeta.Values, tables[j])
+
+				selectedIndex++
+			}
+
+			m.bindResourceRows = append(m.bindResourceRows, rowMeta)
+			rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Top, cells...))
+		}
+
+		sectionParts = append(sectionParts, lipgloss.JoinVertical(lipgloss.Top, rows...))
+		sections = append(sections, lipgloss.JoinVertical(lipgloss.Top, sectionParts...))
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Top, sections...)
+}
+
+func renderResourceBindingOptionsCell(content string, selected bool, width int) string {
+	style := lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		Height(3).
+		Width(max(1, width-1)).
+		Align(lipgloss.Center, lipgloss.Center)
+
+	if selected {
+		style = style.BorderForeground(lipgloss.Color("#0087ff"))
+	}
+
+	return style.Render(content)
+}
+
+func (m *model) findBindResourcePosition() (row int, col int, ok bool) {
+	for r, bindRow := range m.bindResourceRows {
+		for c, idx := range bindRow.Indices {
+			if idx == m.selectedBindResourceCell {
+				return r, c, true
+			}
+		}
+	}
+	return 0, 0, false
+}
+
+func (m *model) currentSelectedBindResource() string {
+	for _, bindRow := range m.bindResourceRows {
+		for i, idx := range bindRow.Indices {
+			if idx == m.selectedBindResourceCell {
+				return bindRow.Values[i]
+			}
+		}
+	}
+	return ""
+}
+
+func (m *model) BindResourceToEndpoint(selectedResource string) {
+	if selectedResource == "" || !strings.Contains(selectedResource, ".") {
+		return
+	}
+	s := strings.Split(selectedResource, ".")
+	resourceName, tableName := s[0], s[1]
+
+	resource, ok := state.AppState.ResourceContract.Resources[resourceName]
+	if !ok || resource.DB == nil {
+		return
+	}
+
+	_, ok = resource.DB.Tables[tableName]
+	if !ok {
+		return
+	}
+
+	path, ok := state.AppState.ApiContract.Paths[m.selectedPath]
+	if !ok {
+		return
+	}
+
+	resourceBinding := &contracts.RouteResourceBinding{
+		ResourceName: resourceName,
+		Table:        tableName,
+	}
+
+	method := m.CurrentMenuSelection()
+	switch method {
+	case "GET":
+		if path.GET != nil {
+			path.GET.XResource = resourceBinding
+		}
+	case "POST":
+		if path.POST != nil {
+			path.POST.XResource = resourceBinding
+		}
+	case "PUT":
+		if path.PUT != nil {
+			path.PUT.XResource = resourceBinding
+		}
+	case "PATCH":
+		if path.PATCH != nil {
+			path.PATCH.XResource = resourceBinding
+		}
+	case "DELETE":
+		if path.DELETE != nil {
+			path.DELETE.XResource = resourceBinding
+		}
+	case "HEAD":
+		if path.HEAD != nil {
+			path.HEAD.XResource = resourceBinding
+		}
+	case "OPTIONS":
+		if path.OPTIONS != nil {
+			path.OPTIONS.XResource = resourceBinding
+		}
+	default:
+		return
+	}
+
+	state.AppState.ApiContract.Paths[m.selectedPath] = path
+
+	state.WriteToContractFile()
+}
