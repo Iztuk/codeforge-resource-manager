@@ -464,8 +464,7 @@ func (m *model) BindResourceToEndpoint(selectedResource string) {
 		Table:        tableName,
 	}
 
-	methods := m.CurrentMenuItems()
-	method := methods[m.menuIndex]
+	method := m.CurrentMenuSelection()
 	switch method {
 	case "GET":
 		if path.GET != nil {
