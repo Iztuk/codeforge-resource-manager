@@ -2,6 +2,8 @@ module resource-manager
 
 go 1.25.1
 
+toolchain go1.25.9
+
 require (
 	charm.land/bubbles/v2 v2.1.0
 	charm.land/bubbletea/v2 v2.0.2

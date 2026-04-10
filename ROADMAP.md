@@ -92,3 +92,54 @@ This allows API endpoints to be explicitly linked to resource contracts, enablin
 - `x-resource` acts as a bridge between API contracts and resource definitions
 - Designed to support CodeForge Observer's runtime auditing against **field level permissions**
 - UI will reuse existing navigation and selection patterns for consistency
+
+## Help View
+
+### Goal
+
+Enable users to view guides and controls within CodeForge Resource Manager.
+
+This allows new users to quickly understand navigation patterns and available actions across the application.
+
+### Includes
+
+#### General Commands
+
+- Display global keybindings available across all views:
+  - Navigation (`h/j/k/l`)
+  - Selection (`enter`)
+  - Back (`backspace`)
+  - Exit (`ctrl+c`)
+- Provide a consistent reference for commonly used controls
+
+#### Page Specific Commands
+
+- Display contextual commands based on the current page:
+  - Resource management and Resource Binding actions
+    - Add (`ctrl+a`)
+    - Remove/Delete (`ctrl+b`)
+    - Toggle Field Permissions (`space`)
+  - Resource Binding
+    - Add (`ctrl+a`)
+    - Remove/Delete (`ctrl+b`)
+- Dynamically update based on `currentPage` and view state
+
+#### Command Descriptions
+
+- Provide short explanations for each command
+- Clarify what action does (not just the keybinding)
+
+#### Layout & Organization
+
+- Ensure readability and alignment within the TUI
+- Highlight important or frequently used actions
+
+#### Accessibility & Discoverability
+
+- Accessible from the Home Page
+- Ensure help content is easy to scan quickly
+
+### Design Notes
+
+- Designed to improve onboarding and usability
+- Reuse existing Lipgloss styling for consistency
