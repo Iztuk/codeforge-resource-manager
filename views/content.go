@@ -28,6 +28,9 @@ func (m *model) GenerateContent() string {
 
 	switch m.currentPage {
 	case HomePage:
+		if m.CurrentMenuSelection() == "Help" {
+			return "This is the help section"
+		}
 		return "Select an option from the menu."
 
 	case ResourcesPage:

@@ -179,6 +179,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			case "enter":
+				if m.CurrentMenuSelection() == "Help" {
+					return m, nil
+				}
+
 				if m.resourceLevel != ResourceLevelTables && m.bindLevel != PathItem {
 					m.SelectMenuItem()
 					m.menuIndex = 0
