@@ -91,7 +91,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.menuWidth = m.width / 5
 		m.contentWidth = max(20, m.width-m.menuWidth)
 
-		contentHeight := m.height - 6
+		contentHeight := m.height - 3
 		if contentHeight < 1 {
 			contentHeight = 1
 		}

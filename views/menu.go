@@ -55,13 +55,13 @@ func (m model) GenerateMenuItems(menuItems []string, width int) string {
 		bottomHeight := lipgloss.Height(bottom)
 
 		spacerHeight := max(0, (m.height-10)-topHeight-bottomHeight)
-		spacer := strings.Repeat("\n", spacerHeight)
+		separator := "\n" + strings.Repeat("\n", spacerHeight)
 
 		if topBlock == "" {
-			return spacer + bottom
+			return bottom
 		}
 
-		return topBlock + spacer + bottom
+		return topBlock + separator + bottom
 	}
 
 	var b strings.Builder
