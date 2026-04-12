@@ -54,7 +54,7 @@ func (m model) GenerateMenuItems(menuItems []string, width int) string {
 		topHeight := lipgloss.Height(topBlock)
 		bottomHeight := lipgloss.Height(bottom)
 
-		spacerHeight := max(0, (m.height-10)-topHeight-bottomHeight)
+		spacerHeight := max(0, (m.height-7)-topHeight-bottomHeight)
 		separator := "\n" + strings.Repeat("\n", spacerHeight)
 
 		if topBlock == "" {
