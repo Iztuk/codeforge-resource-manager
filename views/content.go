@@ -29,9 +29,9 @@ func (m *model) GenerateContent() string {
 	switch m.currentPage {
 	case HomePage:
 		if m.CurrentMenuSelection() == "Help" {
-			return "This is the help section"
+			return GenerateGeneralHelpView()
 		}
-		return "Select an option from the menu."
+		return "Select an option from the menu.\n\n" + GenerateGeneralCommands()
 
 	case ResourcesPage:
 		switch m.resourceLevel {
