@@ -81,13 +81,19 @@ func WriteToResourceFile() error {
 }
 
 func DeleteResource(name string) error {
-	err := WriteToResourceFile()
-	if err == nil {
-		delete(AppState.ResourceContract.Resources, name)
-		return nil
+	res, ok := AppState.ResourceContract.Resources[name]
+	if !ok {
+		return fmt.Errorf("resource %s not found", name)
 	}
 
-	return err
+	delete(AppState.ResourceContract.Resources, name)
+
+	if err := WriteToResourceFile(); err != nil {
+		AppState.ResourceContract.Resources[name] = res
+		return err
+	}
+
+	return nil
 }
 
 func WriteToContractFile() error {

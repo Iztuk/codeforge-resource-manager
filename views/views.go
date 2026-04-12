@@ -147,6 +147,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				m.deleteResourceErrors = state.DeleteResource(menuItemName)
+				if m.menuIndex != 0 && m.deleteResourceErrors == nil {
+					m.menuIndex--
+				}
 				return m, nil
 			}
 		}
