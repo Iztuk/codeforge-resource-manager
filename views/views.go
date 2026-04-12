@@ -4,7 +4,6 @@ import (
 	"log"
 	"resource-manager/internal/resources"
 	"resource-manager/internal/state"
-	"strings"
 
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/bubbles/v2/viewport"
@@ -92,7 +91,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.menuWidth = m.width / 5
 		m.contentWidth = max(20, m.width-m.menuWidth)
 
-		contentHeight := m.height - 6
+		contentHeight := m.height - 3
 		if contentHeight < 1 {
 			contentHeight = 1
 		}
@@ -179,6 +178,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil
 			case "enter":
+				if m.CurrentMenuSelection() == "Help" {
+					return m, nil
+				}
+
 				if m.resourceLevel != ResourceLevelTables && m.bindLevel != PathItem {
 					m.SelectMenuItem()
 					m.menuIndex = 0
@@ -374,13 +377,12 @@ func (m *model) View() tea.View {
 	}
 
 	title := m.titleView(m.width, 0)
-	menu := m.menuBarView(m.menuWidth, m.height-6)
-	content := m.contentView(m.contentWidth, m.height-6)
-	cmdHelp := m.cmdView(m.width, 0)
+	menu := m.menuBarView(m.menuWidth, m.height-3)
+	content := m.contentView(m.contentWidth, m.height-3)
 
 	body := lipgloss.JoinHorizontal(lipgloss.Top, menu, content)
 
-	ui := lipgloss.JoinVertical(lipgloss.Top, title, body, cmdHelp)
+	ui := lipgloss.JoinVertical(lipgloss.Top, title, body)
 
 	v := tea.NewView(ui)
 	v.AltScreen = true
@@ -437,44 +439,6 @@ func (m *model) titleView(width, height int) string {
 	}
 
 	return style.Render("CodeForge Resource Manager")
-}
-
-func (m *model) cmdView(width, height int) string {
-	style := lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-		Padding(0).
-		Width(width).
-		Height(height).
-		Foreground(lipgloss.Color("#ffffff"))
-
-	var b strings.Builder
-
-	switch m.currentPage {
-	case HomePage:
-	case ResourcesPage:
-		switch m.resourceLevel {
-		case ResourceLevelList:
-			if m.contentMode == ContentAddResource {
-				b.WriteString(" ")
-				b.WriteString("Navigation: tab (down)/shift+tab (up)")
-				b.WriteString(" | ")
-				b.WriteString("Cancel: esc")
-				b.WriteString(" | ")
-				b.WriteString("Save: enter")
-
-			} else {
-				b.WriteString(" ")
-				b.WriteString("Add Resource: ctrl + a")
-				b.WriteString(" | ")
-				b.WriteString("Delete Resource: ctrl + d")
-
-			}
-		case ResourceLevelTables:
-		}
-	case BindResourcePage:
-	}
-
-	return style.Render(b.String())
 }
 
 func StartView() {

@@ -32,6 +32,38 @@ func (m model) GenerateMenuItems(menuItems []string, width int) string {
 	selectedStyle := style.
 		BorderForeground(lipgloss.Color("#0087ff"))
 
+	if m.currentPage == HomePage {
+		var topParts []string
+		for i := 0; i < len(menuItems)-1; i++ {
+			if m.menuIndex == i {
+				topParts = append(topParts, selectedStyle.Render(menuItems[i]))
+			} else {
+				topParts = append(topParts, style.Render(menuItems[i]))
+			}
+		}
+
+		var bottom string
+		if m.menuIndex == len(menuItems)-1 {
+			bottom = selectedStyle.Render(menuItems[len(menuItems)-1])
+		} else {
+			bottom = style.Render(menuItems[len(menuItems)-1])
+		}
+
+		topBlock := strings.Join(topParts, "\n")
+
+		topHeight := lipgloss.Height(topBlock)
+		bottomHeight := lipgloss.Height(bottom)
+
+		spacerHeight := max(0, (m.height-7)-topHeight-bottomHeight)
+		separator := "\n" + strings.Repeat("\n", spacerHeight)
+
+		if topBlock == "" {
+			return bottom
+		}
+
+		return topBlock + separator + bottom
+	}
+
 	var b strings.Builder
 	for i, item := range menuItems {
 		if i == m.menuIndex {
@@ -54,6 +86,7 @@ func (m *model) CurrentMenuItems() []string {
 		return []string{
 			"Resources",
 			"Bind Resource",
+			"Help",
 		}
 	case ResourcesPage:
 		switch m.resourceLevel {
@@ -112,6 +145,7 @@ func (m *model) CurrentMenuItems() []string {
 		return []string{
 			"Resources",
 			"Bind Resource",
+			"Help",
 		}
 	}
 	return []string{}
