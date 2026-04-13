@@ -163,6 +163,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "ctrl+d":
 				m.RemoveResourceBinding()
 				return m, nil
+			case "esc":
+				if m.contentMode == ContentBindResource {
+					m.activeScreen = ScreenMenubar
+					m.contentMode = ContentPreview
+				}
 			}
 		}
 
@@ -436,8 +441,7 @@ func (m *model) titleView(width, height int) string {
 		case PathList:
 			return style.Render("Bind Resource")
 		case PathItem:
-			return style.Render(m.debug)
-			// return style.Render(m.selectedPath)
+			return style.Render(m.selectedPath)
 		}
 	}
 

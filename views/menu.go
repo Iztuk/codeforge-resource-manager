@@ -64,8 +64,14 @@ func (m model) GenerateMenuItems(menuItems []string, width int) string {
 		return topBlock + separator + bottom
 	}
 
+	maxContentLength := max(4, m.menuWidth-7)
+
 	var b strings.Builder
 	for i, item := range menuItems {
+		if len(item) > maxContentLength {
+			item = item[:maxContentLength-3] + "..."
+		}
+
 		if i == m.menuIndex {
 			b.WriteString(selectedStyle.Render(item))
 		} else {
@@ -117,24 +123,13 @@ func (m *model) CurrentMenuItems() []string {
 				return []string{}
 			}
 
-			maxContentLength := max(4, m.menuWidth-7)
-
 			var paths []string
 			for key := range state.AppState.ApiContract.Paths {
 				paths = append(paths, key)
 			}
 			sort.Strings(paths)
 
-			formattedPaths := make([]string, len(paths))
-			for i, path := range paths {
-				if len(path) > maxContentLength {
-					formattedPaths[i] = path[:maxContentLength-3] + "..."
-				} else {
-					formattedPaths[i] = path
-				}
-			}
-
-			return formattedPaths
+			return paths
 		case PathItem:
 			pathItem := state.AppState.ApiContract.Paths[m.selectedPath]
 
