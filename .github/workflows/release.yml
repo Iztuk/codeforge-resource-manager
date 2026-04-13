@@ -25,16 +25,16 @@ jobs:
         run: go test -v ./...
   
       - name: Build release binaries
+        env:
+          CGO_ENABLED: 1
+          GOOS: linux
+          GOARCH: amd64
         run: |
           mkdir -p dist
           GOOS=linux GOARCH=amd64 go build -o dist/cfrm-linux-amd64 ./cmd
-          GOOS=linux GOARCH=arm64 go build -o dist/cfrm-linux-arm64 ./cmd
-          GOOS=darwin GOARCH=amd64 go build -o dist/cfrm-darwin-amd64 ./cmd
-          GOOS=darwin GOARCH=arm64 go build -o dist/cfrm-darwin-arm64 ./cmd
-          GOOS=windows GOARCH=amd64 go build -o dist/cfrm-windows-amd64.exe ./cmd
   
       - name: Create Github Release
-        uses: softprops/action-gh/release@v2
+        uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           generate_release_notes: true
